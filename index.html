@@ -235,7 +235,7 @@
       if (q && !norm([r.nom, r.cuisine, r.adresse, r.ville, r.zone].join(" ")).includes(q)) return false;
       if (state.cats.size && !(r.categories || []).some((c) => state.cats.has(c))) return false;
       if (state.prix.size && !state.prix.has(r.niveau_prix)) return false;
-      if (state.ville && r.zone || r.ville !== state.ville) return false;
+      if (state.ville && (r.zone || r.ville) !== state.ville) return false;
       if (state.statut && r.statut !== state.statut) return false;
       return true;
     });
