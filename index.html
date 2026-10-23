@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Mes restos">
+<meta name="theme-color" content="#f6f1ea">
+<title>Mes restos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --bg: #f6f1ea;
+    --card: #ffffff;
+    --ink: #1f1a17;
+    --muted: #7a6f66;
+    --line: #e6ddd2;
+    --accent: #d9481c;
+    --accent-soft: #fbe4da;
+    --chip: #efe7dd;
+    --ok: #2f7d4f;
+    --shadow: 0 1px 2px rgba(31,26,23,.06), 0 6px 18px rgba(31,26,23,.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #161311;
+      --card: #211d1a;
+      --ink: #f3ece4;
+      --muted: #a89c91;
+      --line: #342e29;
+      --accent: #ff7a4d;
+      --accent-soft: #3a2219;
+      --chip: #2c2622;
+      --ok: #6fcf97;
+      --shadow: none;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 15px/1.45 Inter, system-ui, -apple-system, sans-serif;
+    padding: env(safe-area-inset-top) 16px calc(90px + env(safe-area-inset-bottom));
+    -webkit-tap-highlight-color: transparent;
+  }
+  header { padding: 20px 0 8px; }
+  h1 {
+    font-family: Fraunces, Georgia, serif;
+    font-weight: 800;
+    font-size: 34px;
+    letter-spacing: -.5px;
+    margin: 0;
+  }
+  .sub { color: var(--muted); font-size: 14px; margin-top: 2px; }
+  .search {
+    width: 100%;
+    margin: 14px 0 10px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 1px solid var(--line);
+    background: var(--card);
+    color: var(--ink);
+    font: inherit;
+    font-size: 16px;
+  }
+  .row { display: flex; gap: 8px; overflow-x: auto; padding: 4px 0 8px; scrollbar-width: none; }
+  .row::-webkit-scrollbar { display: none; }
+  .label { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-top: 6px; }
+  .chip {
+    flex: none;
+    border: 1px solid transparent;
+    background: var(--chip);
+    color: var(--ink);
+    padding: 7px 12px;
+    border-radius: 999px;
+    font: inherit;
+    font-size: 14px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .chip.on { background: var(--accent); color: #fff; }
+  select.chip { appearance: none; padding-right: 26px; background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%); background-position: calc(100% - 14px) 50%, calc(100% - 9px) 50%; background-size: 5px 5px; background-repeat: no-repeat; }
+  .bar { display: flex; justify-content: space-between; align-items: center; margin: 10px 0 6px; color: var(--muted); font-size: 14px; }
+  .linkbtn { background: none; border: 0; color: var(--accent); font: inherit; font-size: 14px; cursor: pointer; padding: 0; }
+  .list { display: grid; gap: 12px; }
+  @media (min-width: 720px) { .list { grid-template-columns: 1fr 1fr; } body { max-width: 980px; margin: 0 auto; } }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 14px 16px;
+    box-shadow: var(--shadow);
+    transition: transform .25s, box-shadow .25s;
+  }
+  .card.pick { outline: 3px solid var(--accent); transform: scale(1.01); }
+  .top { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+  .name { font-family: Fraunces, Georgia, serif; font-weight: 600; font-size: 19px; line-height: 1.2; }
+  .price { font-weight: 600; color: var(--accent); white-space: nowrap; }
+  .price .off { color: var(--line); }
+  .meta { color: var(--muted); font-size: 14px; margin-top: 4px; }
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .tag { background: var(--chip); padding: 3px 9px; border-radius: 999px; font-size: 12.5px; }
+  .tag.status { background: var(--accent-soft); color: var(--accent); }
+  .tag.status.done { color: var(--ok); background: transparent; border: 1px solid var(--ok); }
+  .actions { display: flex; gap: 8px; margin-top: 12px; }
+  .actions a {
+    flex: 1;
+    text-align: center;
+    text-decoration: none;
+    padding: 9px 10px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 14px;
+  }
+  .go { background: var(--ink); color: var(--bg); }
+  .ig { background: var(--chip); color: var(--ink); }
+  .empty, .msg { text-align: center; color: var(--muted); padding: 40px 10px; }
+  .msg code { background: var(--chip); padding: 2px 6px; border-radius: 6px; }
+  .fab {
+    position: fixed;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: calc(18px + env(safe-area-inset-bottom));
+    background: var(--accent);
+    color: #fff;
+    border: 0;
+    border-radius: 999px;
+    padding: 14px 22px;
+    font: inherit;
+    font-weight: 600;
+    font-size: 16px;
+    box-shadow: 0 8px 24px rgba(217,72,28,.35);
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Mes restos</h1>
+  <div class="sub" id="sub">Chargement…</div>
+</header>
+
+<input class="search" id="q" type="search" placeholder="Nom, cuisine, quartier…" autocomplete="off">
+
+<div class="label">Ambiance</div>
+<div class="row" id="cats"></div>
+
+<div class="label">Prix et lieu</div>
+<div class="row" id="prix"></div>
+
+<div class="bar">
+  <span id="count"></span>
+  <button class="linkbtn" id="reset">Tout effacer</button>
+</div>
+
+<main class="list" id="list"></main>
+
+<button class="fab" id="random">🎲 On mange où ?</button>
+
+<script>
+  // ===== À REMPLIR =====
+  const SUPABASE_URL = "https://ckhrhexnldbcbdqxdkmu.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_JKbRFpLO_TVeBtjOg7YGeg_CmOOMI-g";
+  // =====================
+
+  const state = { q: "", cats: new Set(), prix: new Set(), ville: "", statut: "" };
+  let restos = [];
+
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const norm = (s) => String(s ?? "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+  async function load() {
+    if (SUPABASE_KEY.startsWith("COLLE")) {
+      $("sub").textContent = "";
+      $("list").innerHTML = '<div class="msg">Il manque la clé : remplace <code>COLLE_TA_CLE_PUBLISHABLE_ICI</code> dans le fichier par ta clé <code>sb_publishable_…</code></div>';
+      return;
+    }
+    try {
+      const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      const { data, error } = await sb.from("restos").select("*").order("date_ajout", { ascending: false });
+      if (error) throw error;
+      restos = data || [];
+      $("sub").textContent = restos.length + " adresses repérées sur Instagram";
+      buildFilters();
+      render();
+    } catch (e) {
+      $("sub").textContent = "";
+      $("list").innerHTML = '<div class="msg">Impossible de charger la base.<br><small>' + esc(e.message || e) + "</small></div>";
+    }
+  }
+
+  function chip(label, on, onClick) {
+    const b = document.createElement("button");
+    b.className = "chip" + (on ? " on" : "");
+    b.textContent = label;
+    b.onclick = onClick;
+    return b;
+  }
+
+  function select(placeholder, values, current, onChange) {
+    const s = document.createElement("select");
+    s.className = "chip" + (current ? " on" : "");
+    s.innerHTML = '<option value="">' + esc(placeholder) + "</option>" + values.map((v) => '<option value="' + esc(v) + '"' + (v === current ? " selected" : "") + ">" + esc(v) + "</option>").join("");
+    s.onchange = () => onChange(s.value);
+    return s;
+  }
+
+  function buildFilters() {
+    const cats = [...new Set(restos.flatMap((r) => r.categories || []))].sort();
+    const villes = [...new Set(restos.map((r) => r.ville).filter(Boolean))].sort();
+    const statuts = [...new Set(restos.map((r) => r.statut).filter(Boolean))].sort();
+
+    const c = $("cats");
+    c.innerHTML = "";
+    if (!cats.length) c.innerHTML = '<span class="sub">Aucune catégorie pour l\'instant</span>';
+    cats.forEach((cat) => c.append(chip(cat, state.cats.has(cat), () => { toggle(state.cats, cat); buildFilters(); render(); })));
+
+    const p = $("prix");
+    p.innerHTML = "";
+    [1, 2, 3, 4].forEach((n) => p.append(chip("€".repeat(n), state.prix.has(n), () => { toggle(state.prix, n); buildFilters(); render(); })));
+    p.append(select("Ville", villes, state.ville, (v) => { state.ville = v; buildFilters(); render(); }));
+    p.append(select("Statut", statuts, state.statut, (v) => { state.statut = v; buildFilters(); render(); }));
+  }
+
+  function toggle(set, v) { set.has(v) ? set.delete(v) : set.add(v); }
+
+  function filtered() {
+    const q = norm(state.q);
+    return restos.filter((r) => {
+      if (q && !norm([r.nom, r.cuisine, r.adresse, r.ville].join(" ")).includes(q)) return false;
+      if (state.cats.size && !(r.categories || []).some((c) => state.cats.has(c))) return false;
+      if (state.prix.size && !state.prix.has(r.niveau_prix)) return false;
+      if (state.ville && r.ville !== state.ville) return false;
+      if (state.statut && r.statut !== state.statut) return false;
+      return true;
+    });
+  }
+
+  function priceHtml(n) {
+    if (!n) return '<span class="price"><span class="off">€€€€</span></span>';
+    return '<span class="price">' + "€".repeat(n) + '<span class="off">' + "€".repeat(4 - n) + "</span></span>";
+  }
+
+  function render() {
+    const items = filtered();
+    $("count").textContent = items.length + " resto" + (items.length > 1 ? "s" : "");
+    const list = $("list");
+    if (!items.length) {
+      list.innerHTML = '<div class="empty">Aucun resto ne correspond. Essaie d\'enlever un filtre.</div>';
+      return;
+    }
+    list.innerHTML = items.map((r) => {
+      const statut = r.statut ? '<span class="tag status' + (r.statut === "testé" ? " done" : "") + '">' + esc(r.statut) + "</span>" : "";
+      const tags = (r.categories || []).map((c) => '<span class="tag">' + esc(c) + "</span>").join("");
+      const sub = [r.cuisine, r.ville].filter(Boolean).map(esc).join(" · ");
+      const note = r.note_matheo ? " · " + "★".repeat(r.note_matheo) : "";
+      return (
+        '<article class="card" id="r' + r.id + '">' +
+          '<div class="top"><div class="name">' + esc(r.nom) + "</div>" + priceHtml(r.niveau_prix) + "</div>" +
+          '<div class="meta">' + sub + note + "</div>" +
+          (r.adresse ? '<div class="meta">' + esc(r.adresse) + "</div>" : "") +
+          '<div class="tags">' + statut + tags + "</div>" +
+          '<div class="actions">' +
+            (r.lien_maps ? '<a class="go" href="' + esc(r.lien_maps) + '" target="_blank" rel="noopener">Y aller</a>' : "") +
+            (r.lien_instagram ? '<a class="ig" href="' + esc(r.lien_instagram) + '" target="_blank" rel="noopener">Revoir le reel</a>' : "") +
+          "</div>" +
+        "</article>"
+      );
+    }).join("");
+  }
+
+  $("q").addEventListener("input", (e) => { state.q = e.target.value; render(); });
+  $("reset").onclick = () => {
+    state.q = ""; state.cats.clear(); state.prix.clear(); state.ville = ""; state.statut = "";
+    $("q").value = "";
+    buildFilters(); render();
+  };
+  $("random").onclick = () => {
+    const items = filtered();
+    if (!items.length) return;
+    const r = items[Math.floor(Math.random() * items.length)];
+    document.querySelectorAll(".card.pick").forEach((c) => c.classList.remove("pick"));
+    const el = $("r" + r.id);
+    el.classList.add("pick");
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
+
+  load();
+</script>
+</body>
+</html>
