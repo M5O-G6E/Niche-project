@@ -212,7 +212,7 @@
 
   function buildFilters() {
     const cats = [...new Set(restos.flatMap((r) => r.categories || []))].sort();
-    const villes = [...new Set(restos.map((r) => r.ville).filter(Boolean))].sort();
+    const villes = [...new Set(restos.map((r) => r.zone || r.ville).filter(Boolean))].sort();
     const statuts = [...new Set(restos.map((r) => r.statut).filter(Boolean))].sort();
 
     const c = $("cats");
@@ -232,10 +232,10 @@
   function filtered() {
     const q = norm(state.q);
     return restos.filter((r) => {
-      if (q && !norm([r.nom, r.cuisine, r.adresse, r.ville].join(" ")).includes(q)) return false;
+      if (q && !norm([r.nom, r.cuisine, r.adresse, r.ville, r.zone].join(" ")).includes(q)) return false;
       if (state.cats.size && !(r.categories || []).some((c) => state.cats.has(c))) return false;
       if (state.prix.size && !state.prix.has(r.niveau_prix)) return false;
-      if (state.ville && r.ville !== state.ville) return false;
+      if (state.ville && r.zone || r.ville !== state.ville) return false;
       if (state.statut && r.statut !== state.statut) return false;
       return true;
     });
@@ -257,7 +257,7 @@
     list.innerHTML = items.map((r) => {
       const statut = r.statut ? '<span class="tag status' + (r.statut === "testé" ? " done" : "") + '">' + esc(r.statut) + "</span>" : "";
       const tags = (r.categories || []).map((c) => '<span class="tag">' + esc(c) + "</span>").join("");
-      const sub = [r.cuisine, r.ville].filter(Boolean).map(esc).join(" · ");
+      const sub = [r.cuisine, r.zone || r.ville].filter(Boolean).map(esc).join(" · ");
       const note = r.note_matheo ? " · " + "★".repeat(r.note_matheo) : "";
       return (
         '<article class="card" id="r' + r.id + '">' +
