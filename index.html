@@ -185,6 +185,11 @@
   body.portal .auth .err { color: #ffb08f; }
   .portal-foot { display: none; text-align: center; color: rgba(255,255,255,.5); font-size: 13px; margin: 22px 0 10px; }
   body.portal .portal-foot { display: block; }
+  .share-banner { margin: 10px 0 4px; padding: 14px 16px; border-radius: 16px; background: var(--card); border: 2px solid var(--accent); box-shadow: var(--shadow); }
+  .share-banner b { display: block; font-size: 16px; margin-bottom: 4px; }
+  .share-banner span { color: var(--muted); font-size: 14px; word-break: break-all; }
+  body.portal .share-banner { background: rgba(255,255,255,.08); color: #fff; }
+  body.portal .share-banner span { color: rgba(255,255,255,.75); }
 </style>
 </head>
 <body>
@@ -194,6 +199,7 @@
   <div class="sub" id="sub">Chargement…</div>
   <div class="userbar hidden" id="userbar"><span id="who"></span><button class="linkbtn" id="logout">Se déconnecter</button></div>
 </header>
+<div class="share-banner hidden" id="share-banner"><b id="share-title"></b><span id="share-text"></span></div>
 
 <section class="auth hidden" id="auth">
   <div class="tabs">
@@ -243,7 +249,56 @@
   const SUPABASE_URL = "https://ckhrhexnldbcbdqxdkmu.supabase.co";
   const SUPABASE_KEY = "sb_publishable_JKbRFpLO_TVeBtjOg7YGeg_CmOOMI-g";
 
+  const MAKE_WEBHOOK = "https://hook.eu1.make.com/724w9nyrng5m99rv8ut45uxarrpgv3pb";
+
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  // ===== Lien partagé (raccourci iPhone ?add=…, partage Android ?text=…) =====
+  function extraireLien(txt) {
+    const m = String(txt || "").match(/https?:\/\/(www\.)?instagram\.com\/[^\s"'<>]+/i);
+    return m ? m[0] : null;
+  }
+  function capterPartage() {
+    const q = new URLSearchParams(location.search);
+    const brut = [q.get("add"), q.get("url"), q.get("text"), q.get("title")].filter(Boolean).join(" ");
+    if (!brut) return;
+    const lien = extraireLien(brut);
+    try { if (lien) sessionStorage.setItem("niche_lien", lien); } catch (e) {}
+    history.replaceState(null, "", location.pathname);
+    if (!lien) banniere("Lien non reconnu", "Ce partage ne contient pas de lien Instagram.");
+  }
+  function lienEnAttente() { try { return sessionStorage.getItem("niche_lien"); } catch (e) { return null; } }
+  function oublierLien() { try { sessionStorage.removeItem("niche_lien"); } catch (e) {} }
+  function banniere(titre, texte) {
+    $("share-title").textContent = titre;
+    $("share-text").textContent = texte;
+    $("share-banner").classList.remove("hidden");
+  }
+  let envoiEnCours = false;
+  async function envoyerPartage(user) {
+    const lien = lienEnAttente();
+    if (!lien || envoiEnCours) return;
+    envoiEnCours = true;
+    banniere("Ajout en cours…", lien);
+    try {
+      const { data: prof, error } = await sb.from("profils").select("token_raccourci").eq("id", user.id).maybeSingle();
+      if (error || !prof || !prof.token_raccourci) throw new Error("profil introuvable");
+      await fetch(MAKE_WEBHOOK, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ url: lien, token: prof.token_raccourci }).toString()
+      });
+      oublierLien();
+      banniere("Resto envoyé ✅", "On lit le reel et on vérifie l'adresse. Il apparaît dans ta liste d'ici une trentaine de secondes.");
+      setTimeout(() => { if (currentUser) load(); }, 30000);
+    } catch (e) {
+      banniere("Oups, l'envoi a échoué", "Réessaie de partager le reel. (" + (e.message || e) + ")");
+    } finally {
+      envoiEnCours = false;
+    }
+  }
+  capterPartage();
   const state = { q: "", cats: new Set(), prix: new Set(), ville: "", statut: "" };
   let restos = [];
   let mode = "login";
@@ -322,6 +377,7 @@
     $("random").classList.add("hidden");
     $("userbar").classList.add("hidden");
     $("sub").textContent = "On mange où ce soir ? Connecte-toi pour retrouver tes adresses.";
+    if (lienEnAttente()) banniere("Un resto t'attend 🍽️", "Connecte-toi : on l'ajoute à ta liste juste après.");
   }
 
   async function showApp(user) {
@@ -336,6 +392,7 @@
     const { data: prof } = await sb.from("profils").select("pseudo").eq("id", user.id).maybeSingle();
     if (prof && prof.pseudo) $("who").textContent = "Connecté : " + prof.pseudo;
     load();
+    envoyerPartage(user);
   }
 
   sb.auth.onAuthStateChange((_event, session) => {
