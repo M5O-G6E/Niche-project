@@ -47,7 +47,7 @@
     background: var(--bg);
     color: var(--ink);
     font: 15px/1.45 Inter, system-ui, -apple-system, sans-serif;
-    padding: env(safe-area-inset-top) 16px calc(90px + env(safe-area-inset-bottom));
+    padding: env(safe-area-inset-top) 16px calc(100px + env(safe-area-inset-bottom));
     -webkit-tap-highlight-color: transparent;
   }
   header { padding: 20px 0 8px; }
@@ -127,22 +127,53 @@
   .ig { background: var(--chip); color: var(--ink); }
   .empty, .msg { text-align: center; color: var(--muted); padding: 40px 10px; }
   .msg code { background: var(--chip); padding: 2px 6px; border-radius: 6px; }
-  .fab {
+  /* TICK-67 : barre du bas avec « On mange où ? » et « Va choper tes adresses » */
+  .dock {
     position: fixed;
-    left: 50%;
-    transform: translateX(-50%);
-    bottom: calc(18px + env(safe-area-inset-bottom));
-    background: var(--accent);
-    color: #fff;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 20;
+    display: flex;
+    gap: 10px;
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+    background: var(--bg);
+    border-top: 1px solid var(--line);
+  }
+  .fab, .dock-ig {
+    flex: 1;
+    min-height: 54px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
     border: 0;
     border-radius: 999px;
-    padding: 14px 22px;
+    padding: 8px 12px;
     font: inherit;
     font-weight: 600;
-    font-size: 16px;
-    box-shadow: 0 8px 24px rgba(217,72,28,.35);
+    font-size: 15px;
+    line-height: 1.15;
+    text-align: center;
+    text-decoration: none;
     cursor: pointer;
   }
+  .fab { background: var(--accent); color: #fff; box-shadow: 0 8px 24px rgba(217,72,28,.35); }
+  .fab:disabled { background: var(--chip); color: var(--muted); box-shadow: none; cursor: default; }
+  .dock-ig { background: var(--ink); color: var(--bg); }
+  .dock-ig.big { box-shadow: 0 8px 24px rgba(217,72,28,.35); background: var(--accent); color: #fff; }
+  /* Liste vide (nouveau compte) */
+  .welcome { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 22px 18px; box-shadow: var(--shadow); }
+  .welcome h2 { font-family: Fraunces, Georgia, serif; font-weight: 800; font-size: 26px; margin: 0 0 6px; }
+  .welcome p { color: var(--muted); margin: 0 0 16px; }
+  .welcome ol { list-style: none; margin: 0 0 18px; padding: 0; display: grid; gap: 12px; }
+  .welcome li { display: flex; gap: 12px; align-items: flex-start; }
+  .welcome .num { flex: none; width: 28px; height: 28px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); font-weight: 700; display: flex; align-items: center; justify-content: center; }
+  .welcome li span:last-child { padding-top: 3px; }
+  .welcome .linkbtn { text-align: left; margin-top: 4px; min-height: 32px; }
+  .welcome .big-ig { display: flex; align-items: center; justify-content: center; min-height: 56px; border-radius: 999px; background: var(--accent); color: #fff; font-weight: 600; font-size: 17px; text-decoration: none; box-shadow: 0 8px 24px rgba(217,72,28,.35); }
   .hidden { display: none !important; }
   .userbar { display: flex; justify-content: space-between; align-items: center; color: var(--muted); font-size: 14px; margin-top: 4px; }
   .auth { max-width: 420px; margin: 24px auto 0; background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 20px 18px; box-shadow: var(--shadow); }
@@ -297,7 +328,10 @@
 
 </div>
 
-<button class="fab hidden" id="random">🎲 On mange où ?</button>
+<nav class="dock hidden" id="dock">
+  <button class="fab" id="random" type="button">🎲 On mange où ?</button>
+  <a class="dock-ig" id="insta" href="https://www.instagram.com/" target="_blank" rel="noopener">📲 Va choper tes adresses</a>
+</nav>
 
 <script>
   const SUPABASE_URL = "https://ckhrhexnldbcbdqxdkmu.supabase.co";
@@ -597,7 +631,7 @@
     document.body.classList.add("portal");
     $("auth").classList.remove("hidden");
     $("app").classList.add("hidden");
-    $("random").classList.add("hidden");
+    $("dock").classList.add("hidden");
     $("userbar").classList.add("hidden");
     $("sub").textContent = "On mange où ce soir ? Connecte-toi pour retrouver tes adresses.";
     setTimeout(() => {
@@ -611,7 +645,7 @@
     document.body.classList.remove("portal");
     $("auth").classList.add("hidden");
     $("app").classList.remove("hidden");
-    $("random").classList.remove("hidden");
+    $("dock").classList.remove("hidden");
     $("userbar").classList.remove("hidden");
     $("who").textContent = user.email;
     const { data: prof } = await sb.from("profils").select("pseudo").eq("id", user.id).maybeSingle();
@@ -705,6 +739,31 @@
     const items = filtered();
     $("count").textContent = items.length + " resto" + (items.length > 1 ? "s" : "");
     const list = $("list");
+    // TICK-67 : compte neuf = accueil + bouton Instagram mis en avant
+    const vide = !restos.length;
+    $("random").disabled = vide;
+    $("insta").classList.toggle("big", vide);
+    if (vide) {
+      const etape3 = estIphone
+        ? 'Choisis <strong>N!che</strong> tout en bas de la feuille de partage<br><button class="linkbtn" id="welcome-raccourci" type="button">Pas de N!che dans la liste ? Installer le raccourci</button>'
+        : estAndroid
+          ? 'Choisis <strong>N!che</strong> dans les applis proposées<br><button class="linkbtn" id="welcome-raccourci" type="button">Pas de N!che dans la liste ? Installer l\'appli</button>'
+          : "Fais-le depuis ton téléphone : N!che s'installe sur iPhone et Android.";
+      list.innerHTML =
+        '<section class="welcome">' +
+          "<h2>Ta liste est vide</h2>" +
+          "<p>Chaque reel resto que tu partages à N!che arrive ici, vérifié sur Google Maps.</p>" +
+          "<ol>" +
+            '<li><span class="num">1</span><span>Ouvre un reel de resto sur Instagram</span></li>' +
+            '<li><span class="num">2</span><span>Appuie sur <strong>Partager</strong> (l\'avion en papier)</span></li>' +
+            '<li><span class="num">3</span><span>' + etape3 + "</span></li>" +
+          "</ol>" +
+          '<a class="big-ig" href="https://www.instagram.com/" target="_blank" rel="noopener">📲 Va choper tes adresses</a>' +
+        "</section>";
+      const b = $("welcome-raccourci");
+      if (b) b.onclick = ouvrirRaccourci;
+      return;
+    }
     if (!items.length) {
       list.innerHTML = '<div class="empty">Aucun resto ne correspond. Essaie d\'enlever un filtre.</div>';
       return;
