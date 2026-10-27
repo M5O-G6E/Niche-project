@@ -8,6 +8,9 @@
 <meta name="apple-mobile-web-app-title" content="N!che">
 <meta name="theme-color" content="#f6f1ea">
 <title>N!che</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@800&family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,800;1,9..144,900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -262,6 +265,12 @@
       <a class="sheet-btn" id="sheet-install" href="#" target="_blank" rel="noopener">Installer le raccourci</a>
       <p class="sheet-small">Touche « Ajouter le raccourci » sur l'écran qui s'ouvre. Rien d'autre à remplir.</p>
     </div>
+    <div id="sheet-android" class="hidden">
+      <p>Installe N!che sur ton téléphone, une seule fois. Ensuite, sur n'importe quel reel : <b>Partager → N!che</b>, et le resto arrive dans ta liste.</p>
+      <button class="sheet-btn" id="android-install" type="button" style="width:100%;border:0;cursor:pointer">Installer N!che</button>
+      <p class="sheet-small" id="android-manual">Si rien ne s'ouvre : menu <b>⋮</b> de Chrome en haut à droite → <b>Installer l'appli</b> (ou « Ajouter à l'écran d'accueil »).</p>
+      <p class="sheet-small hidden" id="android-done">✅ N!che est installé. Sur Instagram : <b>Partager</b>, puis cherche <b>N!che</b> dans la liste (touche « Plus » si tu ne le vois pas).</p>
+    </div>
     <div id="sheet-other" class="hidden">
       <p>Le raccourci s'installe depuis un <b>iPhone</b> : ouvre N!che dans Safari sur ton téléphone, puis touche « Raccourci N!che » en haut de l'écran.</p>
     </div>
@@ -404,14 +413,46 @@
 
   // ===== Raccourci N!che (proposé à l'inscription, disponible à tout moment) =====
   const estIphone = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const estAndroid = /Android/i.test(navigator.userAgent);
+  const estInstalle = () => window.matchMedia("(display-mode: standalone)").matches;
+
+  // Android : appli installable (manifest + service worker) et cible du menu Partager
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+  }
+  let promptInstall = null;
+  window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); promptInstall = e; });
+  window.addEventListener("appinstalled", () => {
+    promptInstall = null;
+    $("android-install").classList.add("hidden");
+    $("android-manual").classList.add("hidden");
+    $("android-done").classList.remove("hidden");
+  });
+  $("android-install").onclick = async () => {
+    if (promptInstall) {
+      promptInstall.prompt();
+      try { await promptInstall.userChoice; } catch (e) {}
+      promptInstall = null;
+    } else {
+      $("android-manual").style.fontWeight = "600";
+    }
+  };
+
   function ouvrirRaccourci() {
     $("sheet-ios").classList.toggle("hidden", !estIphone);
-    $("sheet-other").classList.toggle("hidden", estIphone);
+    $("sheet-android").classList.toggle("hidden", !estAndroid);
+    $("sheet-other").classList.toggle("hidden", estIphone || estAndroid);
+    if (estAndroid && estInstalle()) {
+      $("android-install").classList.add("hidden");
+      $("android-manual").classList.add("hidden");
+      $("android-done").classList.remove("hidden");
+    }
     $("sheet-install").href = RACCOURCI_ICLOUD;
     $("sheet-raccourci").classList.remove("hidden");
   }
   function fermerRaccourci() { $("sheet-raccourci").classList.add("hidden"); }
   $("open-raccourci").onclick = ouvrirRaccourci;
+  if (estAndroid) $("open-raccourci").textContent = "Installer N!che";
   $("sheet-close").onclick = fermerRaccourci;
   $("sheet-install").addEventListener("click", () => {
     try { localStorage.setItem("niche_raccourci_" + (currentUser && currentUser.id), "1"); } catch (e) {}
