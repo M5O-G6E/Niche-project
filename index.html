@@ -187,6 +187,10 @@
   body.portal .portal-foot { display: block; }
   .share-banner { margin: 10px 0 4px; padding: 14px 16px; border-radius: 16px; background: var(--card); border: 2px solid var(--accent); box-shadow: var(--shadow); }
   .share-banner b { display: block; font-size: 16px; margin-bottom: 4px; }
+  .share-banner.loading b::before { content: ""; display: inline-block; width: 14px; height: 14px; margin-right: 8px; vertical-align: -2px; border: 2px solid var(--accent); border-right-color: transparent; border-radius: 50%; animation: tourne .8s linear infinite; }
+  .toast { position: fixed; left: 50%; top: calc(12px + env(safe-area-inset-top)); transform: translate(-50%, -150%); max-width: calc(100% - 32px); box-sizing: border-box; background: #1f1a17; color: #fff; padding: 12px 18px; border-radius: 999px; font-weight: 600; font-size: 15px; box-shadow: 0 10px 30px rgba(0,0,0,.25); transition: transform .35s ease; z-index: 50; text-align: center; }
+  .toast.show { transform: translate(-50%, 0); }
+  @keyframes tourne { to { transform: rotate(360deg); } }
   .share-banner span { color: var(--muted); font-size: 14px; word-break: break-all; }
   body.portal .share-banner { background: rgba(255,255,255,.08); color: #fff; }
   body.portal .share-banner span { color: rgba(255,255,255,.75); }
@@ -199,6 +203,7 @@
   <div class="sub" id="sub">Chargement…</div>
   <div class="userbar hidden" id="userbar"><span id="who"></span><button class="linkbtn" id="logout">Se déconnecter</button></div>
 </header>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 <div class="share-banner hidden" id="share-banner"><b id="share-title"></b><span id="share-text"></span></div>
 
 <section class="auth hidden" id="auth">
@@ -269,7 +274,8 @@
   }
   function lienEnAttente() { try { return sessionStorage.getItem("niche_lien"); } catch (e) { return null; } }
   function oublierLien() { try { sessionStorage.removeItem("niche_lien"); } catch (e) {} }
-  function banniere(titre, texte) {
+  function banniere(titre, texte, chargement) {
+    $("share-banner").classList.toggle("loading", !!chargement);
     $("share-title").textContent = titre;
     $("share-text").textContent = texte;
     $("share-banner").classList.remove("hidden");
@@ -279,7 +285,7 @@
     const lien = lienEnAttente();
     if (!lien || envoiEnCours) return;
     envoiEnCours = true;
-    banniere("Ajout en cours…", lien);
+    banniere("Envoi du reel…", "Un instant.", true);
     try {
       const { data: prof, error } = await sb.from("profils").select("token_raccourci").eq("id", user.id).maybeSingle();
       if (error || !prof || !prof.token_raccourci) throw new Error("profil introuvable");
@@ -290,36 +296,68 @@
         body: new URLSearchParams({ url: lien, token: prof.token_raccourci }).toString()
       });
       oublierLien();
-      suivreAjout();
+      const att = lireAttente();
+      att.push({ lien, t: Date.now(), avant: restos.map((r) => r.id) });
+      ecrireAttente(att);
+      suivreAttente();
     } catch (e) {
       banniere("Oups, l'envoi a échoué", "Réessaie de partager le reel. (" + (e.message || e) + ")");
     } finally {
       envoiEnCours = false;
     }
   }
-  // Vérifie toutes les 5 s si le resto est arrivé (jusqu'à 2 minutes)
-  async function suivreAjout() {
-    const avant = new Set(restos.map((r) => r.id));
-    const debut = Date.now();
+
+  // ===== Restos en attente (gardés dans le navigateur, même si on recharge) =====
+  const CLE_ATTENTE = "niche_attente";
+  const DELAI_MAX = 180000; // 3 minutes
+  function lireAttente() { try { return JSON.parse(localStorage.getItem(CLE_ATTENTE)) || []; } catch (e) { return []; } }
+  function ecrireAttente(a) { try { localStorage.setItem(CLE_ATTENTE, JSON.stringify(a)); } catch (e) {} }
+  function afficherAttente(a) {
+    if (!a.length) { $("share-banner").classList.add("hidden"); return; }
+    const n = a.length;
+    banniere(n + (n > 1 ? " restos en attente…" : " resto en attente…"), "Lecture du reel et vérification sur Google Maps (20 à 40 s). Tu peux retourner sur Instagram, ça continue sans toi.", true);
+  }
+  let suiviActif = false;
+  async function suivreAttente() {
+    afficherAttente(lireAttente());
+    if (suiviActif) return;
+    suiviActif = true;
     const tick = async () => {
-      const ecoule = Math.round((Date.now() - debut) / 1000);
-      banniere("On s'en occupe… ⏳", "Lecture du reel et vérification sur Google Maps (" + ecoule + " s). Tu peux retourner sur Instagram, ça continue sans toi.");
-      if (currentUser) await load(true);
-      const nouveau = restos.find((r) => !avant.has(r.id));
-      if (nouveau) {
-        banniere("Ajouté à ta liste ✅", nouveau.nom + (nouveau.zone || nouveau.ville ? " · " + (nouveau.zone || nouveau.ville) : ""));
-        const el = $("r" + nouveau.id);
-        if (el) { el.classList.add("pick"); el.scrollIntoView({ behavior: "smooth", block: "center" }); }
-        return;
+      let a = lireAttente();
+      if (!a.length || !currentUser) { suiviActif = false; afficherAttente([]); return; }
+      await load(true);
+      a = lireAttente();
+      const connus = new Set(a[0].avant);
+      const nouveaux = restos.filter((r) => !connus.has(r.id)).reverse();
+      const k = Math.min(nouveaux.length, a.length);
+      if (k > 0) {
+        const arrives = nouveaux.slice(0, k);
+        a = a.slice(k);
+        a.forEach((x) => { x.avant = x.avant.concat(arrives.map((r) => r.id)); });
+        toast(arrives.length > 1
+          ? arrives.length + " restos ajoutés ✅ " + arrives.map((r) => r.nom).join(", ")
+          : "Ajouté ✅ " + arrives[0].nom + (arrives[0].zone || arrives[0].ville ? " · " + (arrives[0].zone || arrives[0].ville) : ""));
+        const el = $("r" + arrives[arrives.length - 1].id);
+        if (el) el.classList.add("pick");
       }
-      if (Date.now() - debut > 120000) {
-        banniere("Pas de nouveau resto", "Il est peut-être déjà dans ta liste, ou le reel ne donne pas assez d'infos pour le retrouver.");
-        return;
-      }
-      setTimeout(tick, 5000);
+      const avantExpir = a.length;
+      a = a.filter((x) => Date.now() - x.t < DELAI_MAX);
+      if (a.length < avantExpir) toast("Un reel n'a rien donné : resto déjà dans ta liste, ou pas assez d'infos dans le reel.");
+      ecrireAttente(a);
+      afficherAttente(a);
+      if (a.length) setTimeout(tick, 5000); else suiviActif = false;
     };
     setTimeout(tick, 5000);
-    banniere("Envoyé ✅ On s'en occupe…", "Lecture du reel et vérification sur Google Maps (environ 20 à 40 s). Tu peux retourner sur Instagram.");
+  }
+
+  // Petit message en haut de l'écran, 5 secondes maximum
+  let toastTimer = null;
+  function toast(texte) {
+    const t = $("toast");
+    t.textContent = texte;
+    t.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove("show"), 5000);
   }
 
   capterPartage();
@@ -418,6 +456,7 @@
     const { data: prof } = await sb.from("profils").select("pseudo").eq("id", user.id).maybeSingle();
     if (prof && prof.pseudo) $("who").textContent = "Connecté : " + prof.pseudo;
     await load();
+    if (lireAttente().length) suivreAttente();
     envoyerPartage(user);
   }
 
