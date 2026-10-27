@@ -176,9 +176,10 @@
   /* Menu latéral */
   header { position: relative; }
   .userbar { margin: 0; }
-  .menu-btn { position: absolute; top: 16px; right: 0; width: 44px; height: 44px; border-radius: 50%; border: 0; background: var(--chip); color: var(--ink); font-size: 20px; cursor: pointer; }
-  .menu-bg { position: fixed; inset: 0; z-index: 45; background: rgba(0,0,0,.45); display: flex; justify-content: flex-end; }
-  .menu { width: min(320px, 86vw); height: 100%; overflow-y: auto; background: var(--bg); color: var(--ink); border-radius: 24px 0 0 24px; padding: calc(16px + env(safe-area-inset-top)) 12px calc(20px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 4px; }
+  body:not(.portal) header h1 { padding-left: 54px; }
+  .menu-btn { position: absolute; top: 18px; left: -4px; width: 44px; height: 44px; border-radius: 50%; border: 0; background: var(--chip); color: var(--ink); font-size: 20px; cursor: pointer; }
+  .menu-bg { position: fixed; inset: 0; z-index: 45; background: rgba(0,0,0,.45); display: flex; justify-content: flex-start; }
+  .menu { width: min(320px, 86vw); height: 100%; overflow-y: auto; background: var(--bg); color: var(--ink); border-radius: 0 24px 24px 0; padding: calc(16px + env(safe-area-inset-top)) 12px calc(20px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 4px; }
   .menu-head { display: flex; align-items: center; justify-content: space-between; padding: 0 4px 0 12px; }
   .menu-logo { font: 800 32px/1 "Baloo 2", system-ui, sans-serif; letter-spacing: -1px; }
   .menu-logo .bang { display: inline-block; transform: rotate(6deg); }
@@ -812,7 +813,7 @@
         .select("statut, avis, date_ajout, restos(*)")
         .order("date_ajout", { ascending: false });
       if (error) throw error;
-      restos = (data || []).filter((e) => e.restos).map((e) => ({ ...e.restos, statut: e.statut, avis: e.avis, date_ajout: e.date_ajout }));
+      restos = (data || []).filter((e) => e.restos).map((e) => ({ ...e.restos, statut: e.statut === "testé" ? "done" : e.statut, avis: e.avis, date_ajout: e.date_ajout }));
       $("sub").textContent = restos.length + (restos.length > 1 ? " adresses niche à tester" : " adresse niche à tester");
       $("menu-n").textContent = restos.length;
       $("menu-count").textContent = restos.length + (restos.length > 1 ? " restos" : " resto");
@@ -890,12 +891,14 @@
     return "cloche";
   }
 
-  // TICK-53 : passer un resto de « to do » à « testé » (et inversement)
+  // TICK-53 : passer un resto de « to do » à « done » (et inversement)
+  // « done » est le nom officiel ; les anciennes lignes « testé » sont lues comme done (sans les modifier en base)
+  function estDone(r) { return r.statut === "done" || r.statut === "testé"; }
   async function changerStatut(id) {
     const r = restos.find((x) => String(x.id) === String(id));
     if (!r || !currentUser) return;
     const avant = r.statut;
-    const apres = avant === "testé" ? "to do" : "testé";
+    const apres = estDone(r) ? "to do" : "done";
     r.statut = apres;
     render();
     try {
@@ -907,7 +910,7 @@
         .select("statut");
       if (error) throw error;
       if (!data || !data.length) throw new Error("aucune ligne modifiée");
-      toast(apres === "testé" ? "Done ✅ " + r.nom : "Remis en to do : " + r.nom);
+      toast(apres === "done" ? "Done ✅ " + r.nom : "Remis en to do : " + r.nom);
       buildFilters();
     } catch (e) {
       r.statut = avant;
@@ -961,7 +964,7 @@
     }
     list.innerHTML = items.map((r) => {
       // TICK-53 : case « to do ☐ » / « done ✓ » qu'on touche pour changer le statut
-      const fait = r.statut === "testé";
+      const fait = estDone(r);
       const statut =
         '<button type="button" class="tag status st-btn' + (fait ? " done" : "") + '" data-id="' + esc(r.id) + '" aria-pressed="' + fait + '" aria-label="' + (fait ? "Testé. Toucher pour remettre à tester" : "À tester. Toucher quand c'est fait") + '">' +
           (fait ? 'done <span class="box">✓</span>' : 'to do <span class="box"></span>') +
@@ -997,7 +1000,7 @@
 
   function drawItems() {
     const items = filtered();
-    return drawPool === "todo" ? items.filter((r) => r.statut !== "testé") : items;
+    return drawPool === "todo" ? items.filter((r) => !estDone(r)) : items;
   }
   function faceDe(n) {
     const on = FACES[n] || FACES[5];
@@ -1058,7 +1061,7 @@
   }
   function ouvrirTirage() {
     if (!filtered().length) return;
-    drawPool = filtered().some((r) => r.statut !== "testé") ? "todo" : "tous";
+    drawPool = filtered().some((r) => !estDone(r)) ? "todo" : "tous";
     $("draw").classList.remove("hidden");
     document.body.style.overflow = "hidden";
     lancerTirage();
