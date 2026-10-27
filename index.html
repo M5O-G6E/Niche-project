@@ -151,6 +151,11 @@
   .auth .submit:disabled { opacity: .6; }
   .auth .err { color: var(--accent); font-size: 14px; margin-top: 10px; min-height: 1em; }
   .auth .hint { color: var(--muted); font-size: 13px; margin-top: 12px; }
+  .pass-wrap { position: relative; }
+  .pass-wrap input { padding-right: 48px; }
+  .eye { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); background: none; border: 0; font-size: 18px; padding: 6px 8px; cursor: pointer; opacity: .75; }
+  .invite-ok { margin: 12px 0 2px; padding: 10px 12px; border-radius: 12px; background: rgba(255,106,51,.15); color: inherit; font-size: 14px; }
+  .invite-ok b { color: #ff6a33; }
   /* ===== Portail de connexion ===== */
   body.portal {
     min-height: 100vh;
@@ -225,12 +230,18 @@
     <label for="f-email">Email</label>
     <input id="f-email" type="email" autocomplete="email" required>
     <label for="f-pass">Mot de passe</label>
-    <input id="f-pass" type="password" autocomplete="current-password" required minlength="6">
+    <div class="pass-wrap">
+      <input id="f-pass" type="password" autocomplete="current-password" required minlength="6">
+      <button class="eye" id="f-eye" type="button" aria-label="Afficher le mot de passe">👁</button>
+    </div>
     <div id="signup-fields" class="hidden">
       <label for="f-pseudo">Pseudo</label>
-      <input id="f-pseudo" type="text" autocomplete="nickname" maxlength="30">
-      <label for="f-code">Code d'invitation</label>
-      <input id="f-code" type="text" autocomplete="off" autocapitalize="characters">
+      <input id="f-pseudo" type="text" autocomplete="nickname" maxlength="30" placeholder="Le nom que tes amis verront">
+      <div id="code-field">
+        <label for="f-code">Code d'invitation</label>
+        <input id="f-code" type="text" autocomplete="off" autocapitalize="characters">
+      </div>
+      <div class="invite-ok hidden" id="invite-ok">Code d'invitation <b id="invite-code"></b> déjà rempli ✓</div>
     </div>
     <button class="submit" id="f-submit" type="submit">Se connecter</button>
     <div class="err" id="f-err"></div>
@@ -247,9 +258,6 @@
       <p>Un raccourci à installer une seule fois. Ensuite, sur n'importe quel reel : <b>Partager → N!che</b>, et le resto arrive dans ta liste.</p>
       <a class="sheet-btn" id="sheet-install" href="#" target="_blank" rel="noopener">Installer le raccourci</a>
       <p class="sheet-small">Touche « Ajouter le raccourci » sur l'écran qui s'ouvre. Rien d'autre à remplir.</p>
-    </div>
-    <div id="sheet-android" class="hidden">
-      <p>Sur <b>Android</b>, le bouton Partager → N!che arrive très bientôt. Pour l'instant, il marche sur iPhone.</p>
     </div>
     <div id="sheet-other" class="hidden">
       <p>Le raccourci s'installe depuis un <b>iPhone</b> : ouvre N!che dans Safari sur ton téléphone, puis touche « Raccourci N!che » en haut de l'écran.</p>
@@ -373,7 +381,7 @@
       }
       const avantExpir = a.length;
       a = a.filter((x) => Date.now() - x.t < DELAI_MAX);
-      if (a.length < avantExpir) toast("Un reel n'a rien donné : soit le resto est déjà dans ta liste, soit le reel ne dit pas assez clairement où c'est. Essaie un reel où le nom ou l'adresse du resto apparaît.");
+      if (a.length < avantExpir) toast("Un reel n'a rien donné : resto déjà dans ta liste, ou pas assez d'infos dans le reel.");
       ecrireAttente(a);
       afficherAttente(a);
       if (a.length) setTimeout(tick, 5000); else suiviActif = false;
@@ -395,9 +403,7 @@
   const estIphone = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
   function ouvrirRaccourci() {
     $("sheet-ios").classList.toggle("hidden", !estIphone);
-    const estAndroid = /Android/i.test(navigator.userAgent);
-    $("sheet-android").classList.toggle("hidden", !estAndroid);
-    $("sheet-other").classList.toggle("hidden", estIphone || estAndroid);
+    $("sheet-other").classList.toggle("hidden", estIphone);
     $("sheet-install").href = RACCOURCI_ICLOUD;
     $("sheet-raccourci").classList.remove("hidden");
   }
@@ -434,9 +440,39 @@
     $("signup-fields").classList.toggle("hidden", m !== "signup");
     $("f-submit").textContent = m === "login" ? "Se connecter" : "Créer mon compte";
     $("f-pass").autocomplete = m === "login" ? "current-password" : "new-password";
-    $("f-hint").textContent = m === "login" ? "Pas encore de compte ? Il te faut un code d'invitation." : "Le code d'invitation ne marche qu'une seule fois.";
+    $("f-hint").textContent = m === "login" ? "Pas encore de compte ? Il te faut un lien ou un code d'invitation." : (inviteCode ? "Plus que 3 champs et c'est parti 🍽️" : "Le code d'invitation ne marche qu'une seule fois.");
     $("f-err").textContent = "";
   }
+
+  // Œil : afficher / masquer le mot de passe
+  $("f-eye").onclick = () => {
+    const p = $("f-pass");
+    const voir = p.type === "password";
+    p.type = voir ? "text" : "password";
+    $("f-eye").setAttribute("aria-label", voir ? "Masquer le mot de passe" : "Afficher le mot de passe");
+    $("f-eye").style.opacity = voir ? "1" : ".75";
+  };
+
+  // Lien d'invitation : …/?invite=NICHE-XXXXXX (ou ?code=) → onglet « Créer un compte », code déjà rempli
+  let inviteCode = "";
+  (function lireInvitation() {
+    const q = new URLSearchParams(location.search);
+    const c = (q.get("invite") || q.get("code") || "").trim().toUpperCase();
+    if (c) {
+      try { sessionStorage.setItem("niche_invite", c); } catch (e) {}
+      q.delete("invite"); q.delete("code");
+      const reste = q.toString();
+      history.replaceState(null, "", location.pathname + (reste ? "?" + reste : ""));
+    }
+    try { inviteCode = c || sessionStorage.getItem("niche_invite") || ""; } catch (e) { inviteCode = c; }
+    if (inviteCode) {
+      $("f-code").value = inviteCode;
+      $("code-field").classList.add("hidden");
+      $("invite-code").textContent = inviteCode;
+      $("invite-ok").classList.remove("hidden");
+      setMode("signup");
+    }
+  })();
   $("tab-login").onclick = () => setMode("login");
   $("tab-signup").onclick = () => setMode("signup");
 
@@ -444,7 +480,7 @@
     const m = String((e && e.message) || e || "");
     if (/invalid login credentials/i.test(m)) return "Email ou mot de passe incorrect.";
     if (/already registered|already exists/i.test(m)) return "Un compte existe déjà avec cet email.";
-    if (/database error saving new user/i.test(m)) return "Code d'invitation invalide ou déjà utilisé, ou pseudo déjà pris.";
+    if (/database error saving new user/i.test(m)) return "Ce pseudo est peut-être déjà pris : essaie une variante (ex. Léo2). Si ça bloque encore, ton invitation a déjà servi : demande-en une nouvelle.";
     if (/password should be at least/i.test(m)) return "Le mot de passe doit faire au moins 6 caractères.";
     if (/invalid.*email|email.*invalid/i.test(m)) return "Cet email n'a pas l'air valide.";
     if (/signups not allowed/i.test(m)) return "Les inscriptions sont fermées pour le moment.";
@@ -473,12 +509,15 @@
         ? await sb.auth.signInWithPassword({ email, password })
         : await sb.auth.signUp({ email, password, options: { data: { pseudo, code } } });
       if (res.error) throw res.error;
+      if (mode === "signup") { try { sessionStorage.removeItem("niche_invite"); } catch (e) {} }
       if (mode === "signup" && !res.data.session) {
         err.textContent = "Compte créé ! Connecte-toi maintenant.";
         setMode("login");
       }
     } catch (e) {
       err.textContent = frenchError(e);
+      // En cas d'échec à l'inscription, on réaffiche le champ code pour pouvoir le corriger
+      if (mode === "signup" && /database error saving new user/i.test(String(e && e.message))) $("code-field").classList.remove("hidden");
     } finally {
       btn.disabled = false;
     }
@@ -510,7 +549,7 @@
     $("userbar").classList.remove("hidden");
     $("who").textContent = user.email;
     const { data: prof } = await sb.from("profils").select("pseudo").eq("id", user.id).maybeSingle();
-    if (prof && prof.pseudo) $("who").textContent = "Salut " + prof.pseudo + " 👋";
+    if (prof && prof.pseudo) $("who").textContent = "Connecté : " + prof.pseudo;
     await load();
     if (lireAttente().length) suivreAttente();
     proposerRaccourciSiNouveau(user);
@@ -535,7 +574,7 @@
         .order("date_ajout", { ascending: false });
       if (error) throw error;
       restos = (data || []).filter((e) => e.restos).map((e) => ({ ...e.restos, statut: e.statut, avis: e.avis, date_ajout: e.date_ajout }));
-      $("sub").textContent = !restos.length ? "Ajoute ton premier resto 👇" : restos.length + (restos.length > 1 ? " adresses niche à tester" : " adresse niche à tester");
+      $("sub").textContent = restos.length + (restos.length > 1 ? " adresses niche à tester" : " adresse niche à tester");
       buildFilters();
       render();
     } catch (e) {
@@ -600,11 +639,6 @@
     const items = filtered();
     $("count").textContent = items.length + " resto" + (items.length > 1 ? "s" : "");
     const list = $("list");
-    if (!restos.length) {
-      list.innerHTML = '<div class="empty"><b>Ta liste est vide pour l\'instant.</b><br>Sur Instagram, ouvre un reel de resto, touche <b>Partager</b> puis <b>N!che</b> : il arrive ici en 30 secondes.<br><br><button class="sheet-btn" type="button" id="empty-raccourci">Installer le raccourci</button></div>';
-      $("empty-raccourci").onclick = ouvrirRaccourci;
-      return;
-    }
     if (!items.length) {
       list.innerHTML = '<div class="empty">Aucun resto ne correspond. Essaie d\'enlever un filtre.</div>';
       return;
