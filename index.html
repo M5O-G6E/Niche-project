@@ -216,10 +216,14 @@
   /* TICK-53 : case to do / done */
   .st-btn { font: inherit; font-size: 12.5px; font-weight: 600; border: 1px solid currentColor; display: inline-flex; align-items: center; gap: 6px; min-height: 30px; padding: 2px 10px; cursor: pointer; }
   .st-btn .box { width: 14px; height: 14px; border: 1.5px solid currentColor; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; line-height: 1; background: var(--card); }
+  .likes { display: inline-flex; gap: 4px; }
+  .lk { min-width: 38px; min-height: 30px; padding: 0 8px; border: 1px solid var(--line); border-radius: 999px; background: var(--card); font-size: 15px; line-height: 1; cursor: pointer; filter: grayscale(1); opacity: .55; }
+  .lk.on { filter: none; opacity: 1; background: var(--accent-soft); border-color: var(--accent); }
   .st-btn.done .box { background: var(--ok); border-color: var(--ok); color: var(--card); }
   /* TICK-51 : fenêtre du tirage « On mange où ? » avec le dé */
-  .draw-bg { position: fixed; inset: 0; z-index: 40; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; padding: 16px; }
-  .draw { width: 100%; max-width: 420px; background: var(--bg); color: var(--ink); border-radius: 24px; padding: 16px 16px 20px; display: grid; gap: 16px; box-shadow: 0 20px 60px rgba(0,0,0,.3); }
+  .draw-bg { position: fixed; inset: 0; z-index: 40; background: rgba(0,0,0,.6); display: flex; align-items: center; justify-content: center; padding: 16px; }
+  .draw { width: 100%; max-width: 420px; background: var(--bg); color: var(--ink); border-radius: 24px; padding: 16px 16px 20px; display: grid; gap: 16px; box-shadow: 0 20px 60px rgba(0,0,0,.3); border: 1px solid var(--line); }
+  @media (prefers-color-scheme: dark) { .draw-bg, .menu-bg { background: rgba(0,0,0,.75); } }
   .draw-head { display: flex; justify-content: space-between; align-items: center; }
   .draw-head h2 { font: 800 24px/1.1 "Baloo 2", system-ui, sans-serif; margin: 0; }
   .draw-close { width: 44px; height: 44px; border-radius: 50%; border: 0; background: var(--chip); color: var(--ink); font-size: 18px; cursor: pointer; }
@@ -250,14 +254,16 @@
   .pop { animation: niche-pop .4s ease-out both; }
   .draw-name { font-family: Fraunces, Georgia, serif; font-size: 30px; font-weight: 800; letter-spacing: -.5px; line-height: 1.1; }
   .draw-name.flick { color: var(--muted); }
-  .draw-meta { color: var(--muted); font-size: 15px; }
-  .draw-stage .tags { justify-content: center; margin-top: 0; }
+  /* Hauteurs réservées : la fenêtre ne change plus de taille pendant que les noms défilent (sinon tout tremble) */
+  .draw-name { width: 100%; min-height: 2.2em; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .draw-meta { color: var(--muted); font-size: 15px; min-height: 22px; }
+  .draw-stage .tags { justify-content: center; margin-top: 0; min-height: 30px; }
   .draw-actions { display: grid; gap: 8px; transition: opacity .25s; }
   .draw-actions.dim { opacity: .35; pointer-events: none; }
   .draw-go { display: flex; align-items: center; justify-content: center; min-height: 54px; border-radius: 999px; background: var(--accent); color: #fff; font-weight: 600; font-size: 16px; text-decoration: none; box-shadow: 0 8px 24px rgba(217,72,28,.35); }
   .draw-row { display: flex; gap: 8px; }
   .draw-row button { flex: 1; min-height: 50px; border-radius: 16px; border: 1.5px solid var(--line); background: var(--card); color: var(--ink); font: inherit; font-weight: 600; font-size: 15px; cursor: pointer; }
-  .draw-info { font-size: 12px; color: var(--muted); text-align: center; }
+  .draw-info { font-size: 12px; color: var(--muted); text-align: center; min-height: 18px; }
   @media (prefers-reduced-motion: reduce) { .die.roll, .pop { animation: none; } }
   .welcome .big-ig { display: flex; align-items: center; justify-content: center; min-height: 56px; border-radius: 999px; background: var(--accent); color: #fff; font-weight: 600; font-size: 17px; text-decoration: none; box-shadow: 0 8px 24px rgba(217,72,28,.35); }
   .hidden { display: none !important; }
@@ -638,7 +644,7 @@
   }
 
   capterPartage();
-  const state = { q: "", cats: new Set(), prix: new Set(), ville: "", statut: "" };
+  const state = { q: "", cats: new Set(), prix: new Set(), ville: "", statut: "", avis: "" };
   let restos = [];
   let mode = "login";
   let currentUser = null;
@@ -856,6 +862,7 @@
     [1, 2, 3, 4].forEach((n) => p.append(chip("€".repeat(n), state.prix.has(n), () => { toggle(state.prix, n); buildFilters(); render(); })));
     p.append(select("Ville", villes, state.ville, (v) => { state.ville = v; buildFilters(); render(); }));
     p.append(select("Statut", statuts, state.statut, (v) => { state.statut = v; buildFilters(); render(); }));
+    p.append(select("Avis", AVIS_FILTRES, state.avis, (v) => { state.avis = v; buildFilters(); render(); }));
   }
 
   function toggle(set, v) { set.has(v) ? set.delete(v) : set.add(v); }
@@ -868,6 +875,9 @@
       if (state.prix.size && !state.prix.has(r.niveau_prix)) return false;
       if (state.ville && (r.zone || r.ville) !== state.ville) return false;
       if (state.statut && r.statut !== state.statut) return false;
+      if (state.avis === "Aimés" && r.avis !== true) return false;
+      if (state.avis === "Pas aimés" && r.avis !== false) return false;
+      if (state.avis === "Pas encore notés" && (r.avis === true || r.avis === false)) return false;
       return true;
     });
   }
@@ -882,7 +892,11 @@
     cloche: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M2 18h20"/><path d="M4 18a8 8 0 0 1 16 0"/><path d="M12 10V7M10 7h4"/></svg>'
   };
   function typeCuisine(r) {
-    const t = norm([r.cuisine, (r.categories || []).join(" "), r.nom].join(" "));
+    // La cuisine et les catégories passent avant le nom (« Bao Bar » italien reste une pizza)
+    const k = typeDepuisTexte(norm([r.cuisine, (r.categories || []).join(" ")].join(" ")));
+    return k !== "cloche" ? k : typeDepuisTexte(norm(r.nom));
+  }
+  function typeDepuisTexte(t) {
     if (/asiat|japon|chin|thai|viet|core|ramen|sushi|bao|wok|pho|udon|indien|dim sum/.test(t)) return "bol";
     if (/ital|pizz|pasta|pates|trattoria/.test(t)) return "pizza";
     if (/mexic|taco|burrito|latin|tex/.test(t)) return "taco";
@@ -922,7 +936,36 @@
   $("list").addEventListener("click", (e) => {
     const b = e.target.closest(".st-btn");
     if (b) changerStatut(b.dataset.id);
+    const l = e.target.closest(".lk");
+    if (l) changerAvis(l.dataset.id, l.dataset.v === "up");
   });
+
+  // TICK-13 : avis 👍 / 👎 (toucher à nouveau le même pouce retire l'avis)
+  const AVIS_FILTRES = ["Aimés", "Pas aimés", "Pas encore notés"];
+  async function changerAvis(id, aime) {
+    const r = restos.find((x) => String(x.id) === String(id));
+    if (!r || !currentUser) return;
+    const avant = r.avis === true || r.avis === false ? r.avis : null;
+    const apres = avant === aime ? null : aime;
+    r.avis = apres;
+    render();
+    try {
+      const { data, error } = await sb
+        .from("enregistrements")
+        .update({ avis: apres })
+        .eq("user_id", currentUser.id)
+        .eq("resto_id", r.id)
+        .select("avis");
+      if (error) throw error;
+      if (!data || !data.length) throw new Error("aucune ligne modifiée");
+      toast(apres === true ? "👍 Noté : " + r.nom : apres === false ? "👎 Noté : " + r.nom : "Avis retiré : " + r.nom);
+    } catch (e) {
+      r.avis = avant;
+      render();
+      toast("Oups, pas enregistré. Réessaie dans un instant.");
+      console.warn("changerAvis", e);
+    }
+  }
 
   function priceHtml(n) {
     if (!n) return '<span class="price"><span class="off">€€€€</span></span>';
@@ -969,6 +1012,12 @@
         '<button type="button" class="tag status st-btn' + (fait ? " done" : "") + '" data-id="' + esc(r.id) + '" aria-pressed="' + fait + '" aria-label="' + (fait ? "Testé. Toucher pour remettre à tester" : "À tester. Toucher quand c'est fait") + '">' +
           (fait ? 'done <span class="box">✓</span>' : 'to do <span class="box"></span>') +
         "</button>";
+      // TICK-13 : avis 👍 / 👎, indépendant du statut (true = aimé, false = pas aimé, vide = pas d'avis)
+      const avis =
+        '<span class="likes">' +
+          '<button type="button" class="lk' + (r.avis === true ? " on" : "") + '" data-id="' + esc(r.id) + '" data-v="up" aria-pressed="' + (r.avis === true) + '" aria-label="J\'aime">👍</button>' +
+          '<button type="button" class="lk' + (r.avis === false ? " on" : "") + '" data-id="' + esc(r.id) + '" data-v="down" aria-pressed="' + (r.avis === false) + '" aria-label="Pas pour moi">👎</button>' +
+        "</span>";
       const tags = (r.categories || []).map((c) => '<span class="tag">' + esc(c) + "</span>").join("");
       const sub = [r.cuisine, r.zone || r.ville].filter(Boolean).map(esc).join(" · ");
       const k = typeCuisine(r);
@@ -977,7 +1026,7 @@
           '<div class="top"><div class="r-ico k-' + k + '" aria-hidden="true">' + ICONES[k] + '</div><div class="name">' + esc(r.nom) + "</div>" + priceHtml(r.niveau_prix) + "</div>" +
           '<div class="meta">' + sub + "</div>" +
           (r.adresse ? '<div class="meta">' + esc(r.adresse) + "</div>" : "") +
-          '<div class="tags">' + statut + tags + "</div>" +
+          '<div class="tags">' + statut + avis + tags + "</div>" +
           '<div class="actions">' +
             (r.lien_maps ? '<a class="go" href="' + esc(r.lien_maps) + '" target="_blank" rel="noopener">Y aller</a>' : "") +
             (r.lien_instagram ? '<a class="ig" href="' + esc(r.lien_instagram) + '" target="_blank" rel="noopener">Revoir le reel</a>' : "") +
@@ -989,7 +1038,7 @@
 
   $("q").addEventListener("input", (e) => { state.q = e.target.value; render(); });
   $("reset").onclick = () => {
-    state.q = ""; state.cats.clear(); state.prix.clear(); state.ville = ""; state.statut = "";
+    state.q = ""; state.cats.clear(); state.prix.clear(); state.ville = ""; state.statut = ""; state.avis = "";
     $("q").value = "";
     buildFilters(); render();
   };
@@ -1061,6 +1110,7 @@
   }
   function ouvrirTirage() {
     if (!filtered().length) return;
+    document.querySelectorAll(".card.pick").forEach((c) => c.classList.remove("pick"));
     drawPool = filtered().some((r) => !estDone(r)) ? "todo" : "tous";
     $("draw").classList.remove("hidden");
     document.body.style.overflow = "hidden";
