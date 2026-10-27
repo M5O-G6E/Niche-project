@@ -163,6 +163,8 @@
   .fab { background: var(--accent); color: #fff; box-shadow: 0 8px 24px rgba(217,72,28,.35); }
   .fab:disabled { background: var(--chip); color: var(--muted); box-shadow: none; cursor: default; }
   .dock-ig { background: var(--ink); color: var(--bg); }
+  .ig-ico { flex: none; }
+  .big-ig { gap: 8px; }
   .dock-ig.big { box-shadow: 0 8px 24px rgba(217,72,28,.35); background: var(--accent); color: #fff; }
   /* Liste vide (nouveau compte) */
   .welcome { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 22px 18px; box-shadow: var(--shadow); }
@@ -176,8 +178,12 @@
   /* Menu latéral */
   header { position: relative; }
   .userbar { margin: 0; }
-  body:not(.portal) header h1 { padding-left: 54px; }
-  .menu-btn { position: absolute; top: 18px; left: -4px; width: 44px; height: 44px; border-radius: 50%; border: 0; background: var(--chip); color: var(--ink); font-size: 20px; cursor: pointer; }
+  /* En-tête compact une fois connecté (maquette) : ☰ + logo + bêta, sans l'accroche */
+  body:not(.portal) header { padding: 12px 0 4px; }
+  body:not(.portal) header h1 { padding-left: 54px; font-size: 34px; line-height: 44px; min-height: 44px; }
+  body:not(.portal) header h1 .beta { vertical-align: middle; margin-left: 2px; }
+  body:not(.portal) header .tagline, body:not(.portal) header .sub { display: none; }
+  .menu-btn { position: absolute; top: 12px; left: -4px; width: 44px; height: 44px; border-radius: 50%; border: 0; background: var(--chip); color: var(--ink); font-size: 20px; cursor: pointer; }
   .menu-bg { position: fixed; inset: 0; z-index: 45; background: rgba(0,0,0,.45); display: flex; justify-content: flex-start; }
   .menu { width: min(320px, 86vw); height: 100%; overflow-y: auto; background: var(--bg); color: var(--ink); border-radius: 0 24px 24px 0; padding: calc(16px + env(safe-area-inset-top)) 12px calc(20px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 4px; }
   .menu-head { display: flex; align-items: center; justify-content: space-between; padding: 0 4px 0 12px; }
@@ -196,6 +202,46 @@
   .menu-aide p { margin: 4px 0 8px; }
   .menu-aide .linkbtn { min-height: 36px; }
   .menu-out { margin-top: auto; align-self: flex-start; min-height: 44px; padding: 0 12px; font-size: 15px; }
+  /* Cartes compactes (TICK-75) */
+  /* Toutes les cartes ont la même hauteur : nom, infos et étiquettes sur une seule ligne chacun (« … » si trop long) */
+  .card.compact { display: flex; align-items: center; gap: 12px; padding: 12px 12px 12px 14px; height: 96px; box-sizing: border-box; }
+  .card.compact .r-ico { width: 56px; height: 56px; flex: none; border-radius: 14px; margin: 0; }
+  .card.compact .c-body { flex: 1; min-width: 0; display: grid; grid-template-rows: 22px 18px 24px; gap: 3px; }
+  .card.compact .name { display: block; width: 100%; font-size: 17px; line-height: 22px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card.compact .meta { margin-top: 0; font-size: 13px; line-height: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card.compact .tags { margin-top: 0; gap: 5px; flex-wrap: nowrap; overflow: hidden; align-items: center; }
+  .card.compact .tag { font-size: 12px; padding: 2px 8px; white-space: nowrap; }
+  .st-mini { font-weight: 600; }
+  .tag.status.done.st-mini { border: 1px solid var(--ok); }
+  .av-mini { padding: 1px 7px; }
+  .av-mini.up { background: var(--accent-soft); }
+  .chev { flex: none; font-size: 26px; color: var(--muted); line-height: 1; }
+  .list { gap: 10px; }
+  /* TICK-76 : page fiche resto */
+  .card { cursor: pointer; }
+  .name.nm { background: none; border: 0; padding: 0; margin: 0; color: inherit; text-align: left; cursor: pointer; }
+  .fiche { position: fixed; inset: 0; z-index: 35; background: var(--bg); color: var(--ink); overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+  .fiche-hero { position: relative; height: calc(170px + env(safe-area-inset-top)); display: flex; align-items: center; justify-content: center; background: var(--b); color: var(--c); }
+  .fiche-icone svg { width: 72px; height: 72px; }
+  .fiche-back { position: absolute; top: calc(12px + env(safe-area-inset-top)); left: 12px; width: 44px; height: 44px; border-radius: 50%; border: 0; background: var(--card); color: var(--ink); font-size: 22px; line-height: 1; cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,.12); }
+  .fiche-body { max-width: 640px; margin: 0 auto; padding: 18px 20px calc(32px + env(safe-area-inset-bottom)); display: grid; gap: 16px; }
+  .fiche-titre { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .fiche-titre h2 { margin: 0; font-family: Fraunces, Georgia, serif; font-weight: 800; font-size: 28px; line-height: 1.1; letter-spacing: -.5px; overflow-wrap: anywhere; }
+  .fiche-titre .st-btn { flex: none; margin-top: 4px; }
+  .fiche .actions { margin-top: 0; }
+  .fiche .actions a { min-height: 48px; display: flex; align-items: center; justify-content: center; }
+  .fiche-photos { font-size: 14px; color: var(--accent); text-decoration: none; margin-top: -6px; }
+  .deux-mots { background: var(--accent-soft); border-radius: 16px; padding: 12px 14px; font-size: 15px; line-height: 1.45; }
+  .deux-mots b { display: block; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 4px; }
+  .avis-box { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 14px; box-shadow: var(--shadow); display: grid; gap: 10px; }
+  .avis-box h3 { margin: 0; font-size: 16px; }
+  .avis-row { display: flex; gap: 8px; }
+  .lk-big { flex: 1; min-height: 66px; border: 0; border-radius: 16px; background: var(--chip); color: var(--ink); font: inherit; font-weight: 600; font-size: 15px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; cursor: pointer; }
+  .lk-big span { font-size: 22px; filter: grayscale(1); opacity: .6; }
+  .lk-big.on { background: var(--accent); color: #fff; }
+  .lk-big.down.on { background: var(--ink); color: var(--bg); }
+  .lk-big.on span { filter: none; opacity: 1; }
+  .avis-note { font-size: 12px; color: var(--muted); }
   /* Icônes de cuisine sur les cartes */
   .top .name { flex: 1; min-width: 0; }
   .r-ico { flex: none; width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: var(--b); color: var(--c); margin-top: -2px; }
@@ -422,7 +468,7 @@
 
 <nav class="dock hidden" id="dock">
   <button class="fab" id="random" type="button">🎲 On mange où ?</button>
-  <a class="dock-ig" id="insta" href="https://www.instagram.com/" target="_blank" rel="noopener">📲 Va choper tes adresses</a>
+  <a class="dock-ig" id="insta" href="https://www.instagram.com/" target="_blank" rel="noopener"><svg class="ig-ico" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>Chope tes adresses</a>
 </nav>
 
 <div class="draw-bg hidden" id="draw" role="dialog" aria-modal="true" aria-labelledby="draw-title">
@@ -445,12 +491,20 @@
     <div class="draw-actions" id="draw-actions">
       <a class="draw-go" id="draw-go" href="#" target="_blank" rel="noopener">📍 On y va (itinéraire)</a>
       <div class="draw-row">
-        <button type="button" id="draw-see">Voir dans la liste</button>
+        <button type="button" id="draw-see">Voir la fiche</button>
         <button type="button" id="draw-again">🎲 Relancer</button>
       </div>
       <span class="draw-info" id="draw-info"></span>
     </div>
   </div>
+</div>
+
+<div class="fiche hidden" id="fiche" role="dialog" aria-modal="true" aria-labelledby="fiche-nom">
+  <div class="fiche-hero" id="fiche-hero">
+    <button type="button" class="fiche-back" id="fiche-back" aria-label="Retour à la liste">←</button>
+    <div class="fiche-icone" id="fiche-icone" aria-hidden="true"></div>
+  </div>
+  <div class="fiche-body" id="fiche-body"></div>
 </div>
 
 <div class="menu-bg hidden" id="menu">
@@ -914,7 +968,7 @@
     const avant = r.statut;
     const apres = estDone(r) ? "to do" : "done";
     r.statut = apres;
-    render();
+    rafraichir();
     try {
       const { data, error } = await sb
         .from("enregistrements")
@@ -928,7 +982,7 @@
       buildFilters();
     } catch (e) {
       r.statut = avant;
-      render();
+      rafraichir();
       toast("Oups, pas enregistré. Réessaie dans un instant.");
       console.warn("changerStatut", e);
     }
@@ -938,6 +992,9 @@
     if (b) changerStatut(b.dataset.id);
     const l = e.target.closest(".lk");
     if (l) changerAvis(l.dataset.id, l.dataset.v === "up");
+    if (b || l || e.target.closest("a, select, .welcome")) return;
+    const c = e.target.closest(".card");
+    if (c) ouvrirFiche(c.id.slice(1));
   });
 
   // TICK-13 : avis 👍 / 👎 (toucher à nouveau le même pouce retire l'avis)
@@ -948,7 +1005,7 @@
     const avant = r.avis === true || r.avis === false ? r.avis : null;
     const apres = avant === aime ? null : aime;
     r.avis = apres;
-    render();
+    rafraichir();
     try {
       const { data, error } = await sb
         .from("enregistrements")
@@ -961,7 +1018,7 @@
       toast(apres === true ? "👍 Noté : " + r.nom : apres === false ? "👎 Noté : " + r.nom : "Avis retiré : " + r.nom);
     } catch (e) {
       r.avis = avant;
-      render();
+      rafraichir();
       toast("Oups, pas enregistré. Réessaie dans un instant.");
       console.warn("changerAvis", e);
     }
@@ -995,7 +1052,7 @@
             '<li><span class="num">2</span><span>Appuie sur <strong>Partager</strong> (l\'avion en papier)</span></li>' +
             '<li><span class="num">3</span><span>' + etape3 + "</span></li>" +
           "</ol>" +
-          '<a class="big-ig" href="https://www.instagram.com/" target="_blank" rel="noopener">📲 Va choper tes adresses</a>' +
+          '<a class="big-ig" href="https://www.instagram.com/" target="_blank" rel="noopener"><svg class="ig-ico" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>Chope tes adresses</a>' +
         "</section>";
       const b = $("welcome-raccourci");
       if (b) b.onclick = ouvrirRaccourci;
@@ -1021,16 +1078,19 @@
       const tags = (r.categories || []).map((c) => '<span class="tag">' + esc(c) + "</span>").join("");
       const sub = [r.cuisine, r.zone || r.ville].filter(Boolean).map(esc).join(" · ");
       const k = typeCuisine(r);
+      // Carte compacte (maquette TICK-34) : on touche la carte pour ouvrir la fiche, où se font les changements
+      const badgeStatut = '<span class="tag status' + (fait ? " done" : "") + ' st-mini">' + (fait ? "done ✓" : "to do ☐") + "</span>";
+      const badgeAvis = r.avis === true ? '<span class="tag av-mini up" aria-label="aimé">👍</span>' : r.avis === false ? '<span class="tag av-mini" aria-label="pas aimé">👎</span>' : "";
+      const deuxCats = (r.categories || []).slice(0, 2).map((c) => '<span class="tag">' + esc(c) + "</span>").join("");
       return (
-        '<article class="card" id="r' + r.id + '">' +
-          '<div class="top"><div class="r-ico k-' + k + '" aria-hidden="true">' + ICONES[k] + '</div><div class="name">' + esc(r.nom) + "</div>" + priceHtml(r.niveau_prix) + "</div>" +
-          '<div class="meta">' + sub + "</div>" +
-          (r.adresse ? '<div class="meta">' + esc(r.adresse) + "</div>" : "") +
-          '<div class="tags">' + statut + avis + tags + "</div>" +
-          '<div class="actions">' +
-            (r.lien_maps ? '<a class="go" href="' + esc(r.lien_maps) + '" target="_blank" rel="noopener">Y aller</a>' : "") +
-            (r.lien_instagram ? '<a class="ig" href="' + esc(r.lien_instagram) + '" target="_blank" rel="noopener">Revoir le reel</a>' : "") +
+        '<article class="card compact" id="r' + r.id + '">' +
+          '<div class="r-ico k-' + k + '" aria-hidden="true">' + ICONES[k] + "</div>" +
+          '<div class="c-body">' +
+            '<button type="button" class="name nm" data-open="' + esc(r.id) + '">' + esc(r.nom) + "</button>" +
+            (sub ? '<div class="meta">' + sub + "</div>" : "") +
+            '<div class="tags">' + badgeStatut + badgeAvis + deuxCats + "</div>" +
           "</div>" +
+          '<span class="chev" aria-hidden="true">›</span>' +
         "</article>"
       );
     }).join("");
@@ -1155,11 +1215,105 @@
   $("draw-see").onclick = () => {
     const r = drawGagnant;
     fermerTirage();
-    if (!r) return;
-    document.querySelectorAll(".card.pick").forEach((c) => c.classList.remove("pick"));
-    const el = $("r" + r.id);
-    if (el) { el.classList.add("pick"); el.scrollIntoView({ behavior: "smooth", block: "center" }); }
+    if (r) ouvrirFiche(r.id);
   };
+
+  // ===== TICK-76 : page fiche resto (variante C) =====
+  let ficheId = null;
+  function trouver(id) { return restos.find((x) => String(x.id) === String(id)); }
+  function rafraichir() {
+    render();
+    if (ficheId !== null) { const r = trouver(ficheId); if (r) renderFiche(r); }
+  }
+  function renderFiche(r) {
+    const k = typeCuisine(r);
+    const fait = estDone(r);
+    $("fiche-hero").className = "fiche-hero k-" + k;
+    $("fiche-icone").innerHTML = ICONES[k];
+    const sub = [r.cuisine, r.zone || r.ville].filter(Boolean).map(esc).join(" · ");
+    const tags = (r.categories || []).map((c) => '<span class="tag">' + esc(c) + "</span>").join("");
+    const desc = r.description ? String(r.description).trim() : "";
+    $("fiche-body").innerHTML =
+      '<div class="fiche-titre">' +
+        '<h2 id="fiche-nom">' + esc(r.nom) + "</h2>" +
+        '<button type="button" class="tag status st-btn' + (fait ? " done" : "") + '" data-id="' + esc(r.id) + '" aria-pressed="' + fait + '" aria-label="' + (fait ? "Testé. Toucher pour remettre à tester" : "À tester. Toucher quand c'est fait") + '">' +
+          (fait ? 'done <span class="box">✓</span>' : 'to do <span class="box"></span>') +
+        "</button>" +
+      "</div>" +
+      '<div>' +
+        (sub ? '<div class="meta">' + sub + (r.niveau_prix ? " · " + priceHtml(r.niveau_prix) : "") + "</div>" : "") +
+        (r.adresse ? '<div class="meta">📍 ' + esc(r.adresse) + "</div>" : "") +
+        (tags ? '<div class="tags">' + tags + "</div>" : "") +
+      "</div>" +
+      (desc ? '<div class="deux-mots"><b>En deux mots</b>' + esc(desc) + "</div>" : "") +
+      '<div class="actions">' +
+        (r.lien_maps ? '<a class="go" href="' + esc(r.lien_maps) + '" target="_blank" rel="noopener">Itinéraire</a>' : "") +
+        (r.lien_instagram ? '<a class="ig" href="' + esc(r.lien_instagram) + '" target="_blank" rel="noopener">Voir le reel</a>' : "") +
+      "</div>" +
+      (r.lien_maps ? '<a class="fiche-photos" href="' + esc(r.lien_maps) + '" target="_blank" rel="noopener">Voir les photos sur Google Maps →</a>' : "") +
+      '<section class="avis-box" aria-label="Ton avis">' +
+        "<h3>Ton avis</h3>" +
+        '<div class="avis-row">' +
+          '<button type="button" class="lk-big' + (r.avis === true ? " on" : "") + '" data-id="' + esc(r.id) + '" data-v="up" aria-pressed="' + (r.avis === true) + '"><span>👍</span>J\'aime</button>' +
+          '<button type="button" class="lk-big down' + (r.avis === false ? " on" : "") + '" data-id="' + esc(r.id) + '" data-v="down" aria-pressed="' + (r.avis === false) + '"><span>👎</span>Pas pour moi</button>' +
+        "</div>" +
+        '<span class="avis-note">Tu peux liker sans l\'avoir testé (et inversement). Touche à nouveau pour retirer ton avis.</span>' +
+      "</section>";
+  }
+  function afficherFiche(id) {
+    const r = trouver(id);
+    if (!r) return false;
+    ficheId = r.id;
+    renderFiche(r);
+    $("fiche").classList.remove("hidden");
+    $("fiche").scrollTop = 0;
+    document.body.style.overflow = "hidden";
+    $("fiche-back").focus({ preventScroll: true });
+    return true;
+  }
+  function cacherFiche() {
+    if (ficheId === null) return;
+    const id = ficheId;
+    ficheId = null;
+    $("fiche").classList.add("hidden");
+    document.body.style.overflow = "";
+    const el = $("r" + id);
+    if (el) el.scrollIntoView({ block: "center" });
+  }
+  // L'adresse devient …/?resto=<id> : le geste retour de l'iPhone et le bouton retour d'Android ramènent à la liste
+  function ouvrirFiche(id) {
+    if (!afficherFiche(id)) return;
+    try {
+      const url = new URL(location.href);
+      url.searchParams.set("resto", String(id));
+      history.pushState({ fiche: String(id) }, "", url.pathname + url.search);
+    } catch (e) { /* sans historique, la flèche retour suffit */ }
+  }
+  function fermerFiche() {
+    if (history.state && history.state.fiche) history.back();
+    else cacherFiche();
+  }
+  window.addEventListener("popstate", (e) => {
+    if (e.state && e.state.fiche) afficherFiche(e.state.fiche);
+    else cacherFiche();
+  });
+  $("fiche-back").onclick = fermerFiche;
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && ficheId !== null && $("draw").classList.contains("hidden")) fermerFiche(); });
+  $("fiche").addEventListener("click", (e) => {
+    const b = e.target.closest(".st-btn");
+    if (b) return changerStatut(b.dataset.id);
+    const l = e.target.closest(".lk-big");
+    if (l) changerAvis(l.dataset.id, l.dataset.v === "up");
+  });
+  // Lien direct vers une fiche (…/?resto=12) : ouverte une fois la liste chargée
+  const ficheDemandee = new URLSearchParams(location.search).get("resto");
+  if (ficheDemandee) {
+    history.replaceState(null, "", location.pathname);
+    const attendre = setInterval(() => {
+      if (restos.length) { clearInterval(attendre); ouvrirFiche(ficheDemandee); }
+    }, 300);
+    setTimeout(() => clearInterval(attendre), 15000);
+  }
 
 </script>
 </body>
