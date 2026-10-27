@@ -290,14 +290,38 @@
         body: new URLSearchParams({ url: lien, token: prof.token_raccourci }).toString()
       });
       oublierLien();
-      banniere("Resto envoyé ✅", "On lit le reel et on vérifie l'adresse. Il apparaît dans ta liste d'ici une trentaine de secondes.");
-      setTimeout(() => { if (currentUser) load(); }, 30000);
+      suivreAjout();
     } catch (e) {
       banniere("Oups, l'envoi a échoué", "Réessaie de partager le reel. (" + (e.message || e) + ")");
     } finally {
       envoiEnCours = false;
     }
   }
+  // Vérifie toutes les 5 s si le resto est arrivé (jusqu'à 2 minutes)
+  async function suivreAjout() {
+    const avant = new Set(restos.map((r) => r.id));
+    const debut = Date.now();
+    const tick = async () => {
+      const ecoule = Math.round((Date.now() - debut) / 1000);
+      banniere("On s'en occupe… ⏳", "Lecture du reel et vérification sur Google Maps (" + ecoule + " s). Tu peux retourner sur Instagram, ça continue sans toi.");
+      if (currentUser) await load(true);
+      const nouveau = restos.find((r) => !avant.has(r.id));
+      if (nouveau) {
+        banniere("Ajouté à ta liste ✅", nouveau.nom + (nouveau.zone || nouveau.ville ? " · " + (nouveau.zone || nouveau.ville) : ""));
+        const el = $("r" + nouveau.id);
+        if (el) { el.classList.add("pick"); el.scrollIntoView({ behavior: "smooth", block: "center" }); }
+        return;
+      }
+      if (Date.now() - debut > 120000) {
+        banniere("Pas de nouveau resto", "Il est peut-être déjà dans ta liste, ou le reel ne donne pas assez d'infos pour le retrouver.");
+        return;
+      }
+      setTimeout(tick, 5000);
+    };
+    setTimeout(tick, 5000);
+    banniere("Envoyé ✅ On s'en occupe…", "Lecture du reel et vérification sur Google Maps (environ 20 à 40 s). Tu peux retourner sur Instagram.");
+  }
+
   capterPartage();
   const state = { q: "", cats: new Set(), prix: new Set(), ville: "", statut: "" };
   let restos = [];
@@ -377,7 +401,9 @@
     $("random").classList.add("hidden");
     $("userbar").classList.add("hidden");
     $("sub").textContent = "On mange où ce soir ? Connecte-toi pour retrouver tes adresses.";
-    if (lienEnAttente()) banniere("Un resto t'attend 🍽️", "Connecte-toi : on l'ajoute à ta liste juste après.");
+    setTimeout(() => {
+      if (!currentUser && lienEnAttente()) banniere("Un resto t'attend 🍽️", "Connecte-toi : on l'ajoute à ta liste juste après.");
+    }, 1000);
   }
 
   async function showApp(user) {
@@ -391,7 +417,7 @@
     $("who").textContent = user.email;
     const { data: prof } = await sb.from("profils").select("pseudo").eq("id", user.id).maybeSingle();
     if (prof && prof.pseudo) $("who").textContent = "Connecté : " + prof.pseudo;
-    load();
+    await load();
     envoyerPartage(user);
   }
 
@@ -401,8 +427,8 @@
   });
 
   // ===== Mes restos =====
-  async function load() {
-    $("sub").textContent = "Chargement…";
+  async function load(silencieux) {
+    if (!silencieux) $("sub").textContent = "Chargement…";
     try {
       const { data, error } = await sb
         .from("enregistrements")
