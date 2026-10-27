@@ -513,8 +513,11 @@
   }
 
   sb.auth.onAuthStateChange((_event, session) => {
-    if (session && session.user) showApp(session.user);
-    else showAuth();
+    // setTimeout : évite le blocage de Supabase quand on l'appelle pendant ce rappel (rechargement de page)
+    setTimeout(() => {
+      if (session && session.user) showApp(session.user);
+      else showAuth();
+    }, 0);
   });
 
   // ===== Mes restos =====
