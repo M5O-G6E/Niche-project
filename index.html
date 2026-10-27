@@ -190,6 +190,16 @@
   .share-banner.loading b::before { content: ""; display: inline-block; width: 14px; height: 14px; margin-right: 8px; vertical-align: -2px; border: 2px solid var(--accent); border-right-color: transparent; border-radius: 50%; animation: tourne .8s linear infinite; }
   .toast { position: fixed; left: 50%; top: calc(12px + env(safe-area-inset-top)); transform: translate(-50%, -150%); max-width: calc(100% - 32px); box-sizing: border-box; background: #1f1a17; color: #fff; padding: 12px 18px; border-radius: 999px; font-weight: 600; font-size: 15px; box-shadow: 0 10px 30px rgba(0,0,0,.25); transition: transform .35s ease; z-index: 50; text-align: center; }
   .toast.show { transform: translate(-50%, 0); }
+  .sheet-bg { position: fixed; inset: 0; background: rgba(0,0,0,.55); display: flex; align-items: flex-end; justify-content: center; z-index: 40; }
+  .sheet { width: 100%; max-width: 460px; background: var(--card); color: var(--ink); border-radius: 24px 24px 0 0; padding: 24px 20px calc(24px + env(safe-area-inset-bottom)); box-sizing: border-box; text-align: center; }
+  @media (min-width: 720px) { .sheet-bg { align-items: center; } .sheet { border-radius: 24px; } }
+  .sheet-icon { width: 64px; height: 64px; margin: 0 auto 10px; border-radius: 18px; background: #ff6a33; color: #fff; display: flex; align-items: center; justify-content: center; font: 800 28px "Baloo 2", system-ui, sans-serif; }
+  .sheet h2 { font: 800 24px/1.1 "Baloo 2", system-ui, sans-serif; margin: 0 0 8px; }
+  .sheet p { color: var(--muted); font-size: 15px; margin: 8px 0; }
+  .sheet p b { color: var(--ink); }
+  .sheet-btn { display: block; margin: 14px 0 6px; padding: 14px; border-radius: 14px; background: #ff6a33; color: #fff; font-weight: 600; font-size: 17px; text-decoration: none; }
+  .sheet-small { font-size: 13px !important; }
+  .sheet-later { margin-top: 8px; background: none; border: 0; color: var(--muted); font: inherit; font-size: 15px; padding: 10px; cursor: pointer; }
   @keyframes tourne { to { transform: rotate(360deg); } }
   .share-banner span { color: var(--muted); font-size: 14px; word-break: break-all; }
   body.portal .share-banner { background: rgba(255,255,255,.08); color: #fff; }
@@ -201,7 +211,7 @@
   <h1>N<span class="bang">!</span>che <span class="beta">bêta</span></h1>
   <div class="tagline">Les bonnes adresses<br>ne se perdent plus.</div>
   <div class="sub" id="sub">Chargement…</div>
-  <div class="userbar hidden" id="userbar"><span id="who"></span><button class="linkbtn" id="logout">Se déconnecter</button></div>
+  <div class="userbar hidden" id="userbar"><span id="who"></span><span style="display:flex;gap:14px"><button class="linkbtn" id="open-raccourci">Raccourci N!che</button><button class="linkbtn" id="logout">Se déconnecter</button></span></div>
 </header>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <div class="share-banner hidden" id="share-banner"><b id="share-title"></b><span id="share-text"></span></div>
@@ -229,6 +239,22 @@
 </section>
 <div class="portal-foot">Sur invitation uniquement · bêta</div>
 
+<div class="sheet-bg hidden" id="sheet-raccourci" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+  <div class="sheet">
+    <div class="sheet-icon" aria-hidden="true">N!</div>
+    <h2 id="sheet-title">Ajoute N!che à ton menu Partager</h2>
+    <div id="sheet-ios">
+      <p>Un raccourci à installer une seule fois. Ensuite, sur n'importe quel reel : <b>Partager → N!che</b>, et le resto arrive dans ta liste.</p>
+      <a class="sheet-btn" id="sheet-install" href="#" target="_blank" rel="noopener">Installer le raccourci</a>
+      <p class="sheet-small">Touche « Ajouter le raccourci » sur l'écran qui s'ouvre. Rien d'autre à remplir.</p>
+    </div>
+    <div id="sheet-other" class="hidden">
+      <p>Le raccourci s'installe depuis un <b>iPhone</b> : ouvre N!che dans Safari sur ton téléphone, puis touche « Raccourci N!che » en haut de l'écran.</p>
+    </div>
+    <button class="sheet-later" id="sheet-close" type="button">Plus tard</button>
+  </div>
+</div>
+
 <div id="app" class="hidden">
 
 <input class="search" id="q" type="search" placeholder="Nom, cuisine, quartier…" autocomplete="off">
@@ -254,6 +280,7 @@
   const SUPABASE_URL = "https://ckhrhexnldbcbdqxdkmu.supabase.co";
   const SUPABASE_KEY = "sb_publishable_JKbRFpLO_TVeBtjOg7YGeg_CmOOMI-g";
 
+  const RACCOURCI_ICLOUD = "https://www.icloud.com/shortcuts/3188ae8607044ace852b376ec97f552b";
   const MAKE_WEBHOOK = "https://hook.eu1.make.com/724w9nyrng5m99rv8ut45uxarrpgv3pb";
 
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -360,6 +387,30 @@
     toastTimer = setTimeout(() => t.classList.remove("show"), 5000);
   }
 
+  // ===== Raccourci N!che (proposé à l'inscription, disponible à tout moment) =====
+  const estIphone = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  function ouvrirRaccourci() {
+    $("sheet-ios").classList.toggle("hidden", !estIphone);
+    $("sheet-other").classList.toggle("hidden", estIphone);
+    $("sheet-install").href = RACCOURCI_ICLOUD;
+    $("sheet-raccourci").classList.remove("hidden");
+  }
+  function fermerRaccourci() { $("sheet-raccourci").classList.add("hidden"); }
+  $("open-raccourci").onclick = ouvrirRaccourci;
+  $("sheet-close").onclick = fermerRaccourci;
+  $("sheet-install").addEventListener("click", () => {
+    try { localStorage.setItem("niche_raccourci_" + (currentUser && currentUser.id), "1"); } catch (e) {}
+    setTimeout(fermerRaccourci, 500);
+  });
+  function proposerRaccourciSiNouveau(user) {
+    let vu = false;
+    try { vu = localStorage.getItem("niche_raccourci_" + user.id) === "1"; } catch (e) {}
+    if (!vu && !lienEnAttente()) {
+      try { localStorage.setItem("niche_raccourci_" + user.id, "1"); } catch (e) {}
+      ouvrirRaccourci();
+    }
+  }
+
   capterPartage();
   const state = { q: "", cats: new Set(), prix: new Set(), ville: "", statut: "" };
   let restos = [];
@@ -457,6 +508,7 @@
     if (prof && prof.pseudo) $("who").textContent = "Connecté : " + prof.pseudo;
     await load();
     if (lireAttente().length) suivreAttente();
+    proposerRaccourciSiNouveau(user);
     envoyerPartage(user);
   }
 
