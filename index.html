@@ -284,6 +284,7 @@
   const MAKE_WEBHOOK = "https://hook.eu1.make.com/724w9nyrng5m99rv8ut45uxarrpgv3pb";
 
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  const $ = (id) => document.getElementById(id);
 
   // ===== Lien partagé (raccourci iPhone ?add=…, partage Android ?text=…) =====
   function extraireLien(txt) {
@@ -417,8 +418,7 @@
   let mode = "login";
   let currentUser = null;
 
-  const $ = (id) => document.getElementById(id);
-  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const esc =(s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const norm = (s) => String(s ?? "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
   // ===== Connexion / inscription =====
