@@ -151,6 +151,8 @@
   .auth .submit:disabled { opacity: .6; }
   .auth .err { color: var(--accent); font-size: 14px; margin-top: 10px; min-height: 1em; }
   .auth .hint { color: var(--muted); font-size: 13px; margin-top: 12px; }
+  .auth label.remember { display: flex; align-items: center; gap: 8px; margin: 12px 0 0; font-size: 14px; cursor: pointer; }
+  .auth label.remember input { width: 18px; height: 18px; padding: 0; accent-color: #ff6a33; }
   .pass-wrap { position: relative; }
   .pass-wrap input { padding-right: 48px; }
   .eye { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); background: none; border: 0; font-size: 18px; padding: 6px 8px; cursor: pointer; opacity: .75; }
@@ -228,7 +230,7 @@
   </div>
   <form id="auth-form" novalidate>
     <label for="f-email">Email</label>
-    <input id="f-email" type="email" autocomplete="email" required>
+    <input id="f-email" name="email" type="email" autocomplete="username" inputmode="email" autocapitalize="off" required>
     <label for="f-pass">Mot de passe</label>
     <div class="pass-wrap">
       <input id="f-pass" type="password" autocomplete="current-password" required minlength="6">
@@ -243,6 +245,7 @@
       </div>
       <div class="invite-ok hidden" id="invite-ok">Code d'invitation <b id="invite-code"></b> déjà rempli ✓</div>
     </div>
+    <label class="remember" id="remember-row"><input type="checkbox" id="f-remember" checked> Se souvenir de moi</label>
     <button class="submit" id="f-submit" type="submit">Se connecter</button>
     <div class="err" id="f-err"></div>
     <div class="hint" id="f-hint">Pas encore de compte ? Il te faut un code d'invitation.</div>
@@ -439,6 +442,7 @@
     $("tab-signup").classList.toggle("on", m === "signup");
     $("signup-fields").classList.toggle("hidden", m !== "signup");
     $("f-submit").textContent = m === "login" ? "Se connecter" : "Créer mon compte";
+    $("f-pass").name = m === "login" ? "password" : "new-password";
     $("f-pass").autocomplete = m === "login" ? "current-password" : "new-password";
     $("f-hint").textContent = m === "login" ? "Pas encore de compte ? Il te faut un lien ou un code d'invitation." : (inviteCode ? "Plus que 3 champs et c'est parti 🍽️" : "Le code d'invitation ne marche qu'une seule fois.");
     $("f-err").textContent = "";
@@ -510,6 +514,17 @@
         : await sb.auth.signUp({ email, password, options: { data: { pseudo, code } } });
       if (res.error) throw res.error;
       if (mode === "signup") { try { sessionStorage.removeItem("niche_invite"); } catch (e) {} }
+      // « Se souvenir de moi » : cochée = email pré-rempli + session gardée ; décochée = déconnexion à la fermeture de l'onglet
+      try {
+        if ($("f-remember").checked) {
+          localStorage.setItem("niche_email", email);
+          localStorage.removeItem("niche_oublier");
+        } else {
+          localStorage.removeItem("niche_email");
+          localStorage.setItem("niche_oublier", "1");
+          sessionStorage.setItem("niche_session_ok", "1");
+        }
+      } catch (e) {}
       if (mode === "signup" && !res.data.session) {
         err.textContent = "Compte créé ! Connecte-toi maintenant.";
         setMode("login");
@@ -524,6 +539,16 @@
   };
 
   $("logout").onclick = async () => { await sb.auth.signOut(); };
+
+  // Pré-remplir l'email mémorisé ; si « Se souvenir de moi » était décochée, déconnecter à la réouverture
+  try {
+    const memo = localStorage.getItem("niche_email");
+    if (memo) $("f-email").value = memo;
+    if (localStorage.getItem("niche_oublier") === "1" && !sessionStorage.getItem("niche_session_ok")) {
+      localStorage.removeItem("niche_oublier");
+      sb.auth.signOut();
+    }
+  } catch (e) {}
 
   function showAuth() {
     currentUser = null;
