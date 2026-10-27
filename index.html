@@ -248,6 +248,9 @@
       <a class="sheet-btn" id="sheet-install" href="#" target="_blank" rel="noopener">Installer le raccourci</a>
       <p class="sheet-small">Touche « Ajouter le raccourci » sur l'écran qui s'ouvre. Rien d'autre à remplir.</p>
     </div>
+    <div id="sheet-android" class="hidden">
+      <p>Sur <b>Android</b>, le bouton Partager → N!che arrive très bientôt. Pour l'instant, il marche sur iPhone.</p>
+    </div>
     <div id="sheet-other" class="hidden">
       <p>Le raccourci s'installe depuis un <b>iPhone</b> : ouvre N!che dans Safari sur ton téléphone, puis touche « Raccourci N!che » en haut de l'écran.</p>
     </div>
@@ -370,7 +373,7 @@
       }
       const avantExpir = a.length;
       a = a.filter((x) => Date.now() - x.t < DELAI_MAX);
-      if (a.length < avantExpir) toast("Un reel n'a rien donné : resto déjà dans ta liste, ou pas assez d'infos dans le reel.");
+      if (a.length < avantExpir) toast("Un reel n'a rien donné : soit le resto est déjà dans ta liste, soit le reel ne dit pas assez clairement où c'est. Essaie un reel où le nom ou l'adresse du resto apparaît.");
       ecrireAttente(a);
       afficherAttente(a);
       if (a.length) setTimeout(tick, 5000); else suiviActif = false;
@@ -392,7 +395,9 @@
   const estIphone = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
   function ouvrirRaccourci() {
     $("sheet-ios").classList.toggle("hidden", !estIphone);
-    $("sheet-other").classList.toggle("hidden", estIphone);
+    const estAndroid = /Android/i.test(navigator.userAgent);
+    $("sheet-android").classList.toggle("hidden", !estAndroid);
+    $("sheet-other").classList.toggle("hidden", estIphone || estAndroid);
     $("sheet-install").href = RACCOURCI_ICLOUD;
     $("sheet-raccourci").classList.remove("hidden");
   }
@@ -505,7 +510,7 @@
     $("userbar").classList.remove("hidden");
     $("who").textContent = user.email;
     const { data: prof } = await sb.from("profils").select("pseudo").eq("id", user.id).maybeSingle();
-    if (prof && prof.pseudo) $("who").textContent = "Connecté : " + prof.pseudo;
+    if (prof && prof.pseudo) $("who").textContent = "Salut " + prof.pseudo + " 👋";
     await load();
     if (lireAttente().length) suivreAttente();
     proposerRaccourciSiNouveau(user);
@@ -530,7 +535,7 @@
         .order("date_ajout", { ascending: false });
       if (error) throw error;
       restos = (data || []).filter((e) => e.restos).map((e) => ({ ...e.restos, statut: e.statut, avis: e.avis, date_ajout: e.date_ajout }));
-      $("sub").textContent = restos.length + (restos.length > 1 ? " adresses niche à tester" : " adresse niche à tester");
+      $("sub").textContent = !restos.length ? "Ajoute ton premier resto 👇" : restos.length + (restos.length > 1 ? " adresses niche à tester" : " adresse niche à tester");
       buildFilters();
       render();
     } catch (e) {
@@ -595,6 +600,11 @@
     const items = filtered();
     $("count").textContent = items.length + " resto" + (items.length > 1 ? "s" : "");
     const list = $("list");
+    if (!restos.length) {
+      list.innerHTML = '<div class="empty"><b>Ta liste est vide pour l\'instant.</b><br>Sur Instagram, ouvre un reel de resto, touche <b>Partager</b> puis <b>N!che</b> : il arrive ici en 30 secondes.<br><br><button class="sheet-btn" type="button" id="empty-raccourci">Installer le raccourci</button></div>';
+      $("empty-raccourci").onclick = ouvrirRaccourci;
+      return;
+    }
     if (!items.length) {
       list.innerHTML = '<div class="empty">Aucun resto ne correspond. Essaie d\'enlever un filtre.</div>';
       return;
