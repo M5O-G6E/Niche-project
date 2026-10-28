@@ -418,10 +418,14 @@
   .rond { width: 44px; height: 44px; flex: none; border-radius: 50%; border: 0; background: var(--chip); color: var(--ink); font-size: 20px; cursor: pointer; }
   .ls-rail { display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
   .ls-rail::-webkit-scrollbar { display: none; }
-  .ls-quick { flex: none; width: 112px; height: 92px; border: 0; border-radius: 18px; padding: 12px; display: flex; flex-direction: column; justify-content: space-between; text-align: left; font: inherit; cursor: pointer; color: #fff; }
+  .ls-quick { flex: none; width: 100px; height: 92px; border: 0; border-radius: 18px; padding: 12px; display: flex; flex-direction: column; justify-content: space-between; text-align: left; font: inherit; cursor: pointer; color: #fff; }
   .ls-quick b { font-size: 15px; } .ls-quick span { font-size: 12px; }
   .ls-quick.v-like { background: var(--accent); } .ls-quick.v-done { background: var(--ok); }
   .ls-quick.v-todo { background: var(--accent-soft); color: var(--ink); border: 1.5px solid var(--accent); }
+  .ls-quick.recente { width: 156px; background: var(--card); color: var(--ink); border: 1px solid var(--line); }
+  .ls-quick.recente small { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .ls-quick.recente b { font-family: Fraunces, Georgia, serif; font-weight: 600; line-height: 1.15; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .ls-quick.voir-tout { width: 92px; background: transparent; color: var(--accent); border: 1.5px dashed var(--accent); align-items: center; justify-content: center; gap: 4px; text-align: center; font-weight: 700; font-size: 13px; }
   .ls-h2 { margin: 6px 0 0; font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
   .ls-new { min-height: 54px; display: flex; align-items: center; justify-content: center; gap: 8px; border: 1.5px dashed var(--accent); border-radius: 18px; background: transparent; color: var(--accent); font: inherit; font-size: 16px; font-weight: 600; cursor: pointer; }
   .ls-card { display: flex; gap: 12px; align-items: center; padding: 12px; background: var(--card); border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow); color: var(--ink); font: inherit; text-align: left; cursor: pointer; width: 100%; }
@@ -489,6 +493,19 @@
   .pub-cta button { min-height: 48px; border: 0; border-radius: 999px; background: var(--accent); color: #fff; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; }
   .pub-liens { display: flex; gap: 6px; flex: none; }
   .pub-liens a { min-height: 36px; padding: 0 10px; display: flex; align-items: center; border-radius: 999px; background: var(--chip); color: var(--ink); font-size: 13px; font-weight: 600; text-decoration: none; }
+  /* Couverture plein écran en haut d'une liste, titre posé dessus */
+  .lv-hero { position: relative; margin: calc(-12px - env(safe-area-inset-top)) -16px 0; height: calc(430px + env(safe-area-inset-top)); overflow: hidden; display: flex; align-items: center; justify-content: center; background: var(--chip); color: var(--hfg, #fff); }
+  .lv-hero > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .lv-hero .emo { font-size: 130px; line-height: 1; margin-top: -60px; }
+  .lv-hero .couv-mosa svg { width: 64px; height: 64px; }
+  .lv-voile { position: absolute; inset: 0; }
+  .lv-hero-top { position: absolute; top: calc(12px + env(safe-area-inset-top)); left: 16px; right: 16px; display: flex; justify-content: space-between; align-items: center; }
+  .verre { min-width: 44px; height: 44px; border-radius: 22px; border: 0; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 0 14px; font: inherit; font-size: 14px; font-weight: 600; background: var(--vbg, rgba(255,255,255,.88)); color: var(--vfg, #1f1a17); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); cursor: pointer; }
+  .verre.rondv { width: 44px; padding: 0; font-size: 20px; }
+  .lv-hero-txt { position: absolute; left: 20px; right: 20px; bottom: 20px; display: grid; gap: 6px; justify-items: start; }
+  .lv-hero-txt .tag { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; padding: 4px 9px; border-radius: 999px; background: var(--tbg, var(--accent)); color: var(--tfg, #fff); }
+  .lv-hero-txt h1, body.portal .lv-hero-txt h1 { margin: 0; font: 800 32px/1.05 Fraunces, Georgia, serif; letter-spacing: -.5px; color: inherit; text-shadow: none; overflow-wrap: anywhere; }
+  .lv-hero-txt .inf { font-size: 14px; font-weight: 500; opacity: .88; }
   /* TICK-82 : couverture de liste */
   .couv { position: relative; height: 160px; border-radius: 20px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: var(--chip); flex: none; }
   .couv img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
@@ -1664,6 +1681,55 @@
     }).join("") + "</span>";
   }
   const couvStyle = (c) => (!photoOk(c.couverture_photo) && c.couverture_emoji ? ' style="background:' + fondOk(c.couverture_fond) + '"' : "");
+  // Couverture plein écran : couleurs du texte adaptées au fond (clair/foncé) ou à la photo
+  const lumi = (hex) => { const n = parseInt(fondOk(hex).slice(1), 16); return (0.2126 * (n >> 16) + 0.7152 * ((n >> 8) & 255) + 0.0722 * (n & 255)) / 255; };
+  function heroHtml(c, items, o) {
+    let vars = "", voile = "";
+    if (photoOk(c.couverture_photo)) {
+      vars = "--hfg:#fff;";
+      voile = "linear-gradient(180deg, rgba(0,0,0,.28) 0%, rgba(0,0,0,0) 24%, rgba(0,0,0,0) 45%, var(--teinte, rgba(20,14,10,.9)) 100%)";
+    } else if (c.couverture_emoji) {
+      const f = fondOk(c.couverture_fond);
+      vars = "background:" + f + ";" + (lumi(f) < 0.5
+        ? "--hfg:#fff;--vbg:rgba(255,255,255,.18);--vfg:#fff;--tbg:rgba(255,255,255,.92);--tfg:" + f + ";"
+        : "--hfg:#1f1a17;");
+    } else {
+      vars = "--hfg:var(--ink);";
+      voile = "linear-gradient(180deg, transparent 40%, var(--bg) 100%)";
+    }
+    return '<div class="lv-hero"' + (photoOk(c.couverture_photo) ? " data-photo" : "") + ' style="' + vars + '">' + couvHtml(c, items) +
+      '<div class="lv-voile" style="background:' + (voile || "none") + '"></div>' +
+      '<div class="lv-hero-top">' + (o.gauche || "<span></span>") + (o.droite || "") + "</div>" +
+      '<div class="lv-hero-txt">' + (o.tag ? '<span class="tag">' + o.tag + "</span>" : "") +
+      '<h1 id="' + o.idTitre + '">' + o.titre + '</h1><span class="inf">' + o.info + "</span></div></div>";
+  }
+  const teintes = new Map();
+  function teinterHero(racine) {
+    const hero = racine.querySelector(".lv-hero[data-photo]"); if (!hero) return;
+    const img = hero.querySelector("img"); if (!img) return;
+    const cle = img.src.length + img.src.slice(-48);
+    const appliquer = ([r, g, b]) => {
+      const f = (k) => Math.round(r * k) + "," + Math.round(g * k) + "," + Math.round(b * k);
+      const cl = (k) => [r, g, b].map((v) => Math.round(v + (255 - v) * k)).join(",");
+      hero.style.setProperty("--teinte", "rgba(" + f(0.35) + ",.92)");
+      hero.style.setProperty("--tbg", "rgb(" + cl(0.75) + ")");
+      hero.style.setProperty("--tfg", "rgb(" + f(0.35) + ")");
+    };
+    if (teintes.has(cle)) return appliquer(teintes.get(cle));
+    const calc = () => {
+      try {
+        const cv = document.createElement("canvas"); cv.width = cv.height = 24;
+        const x = cv.getContext("2d");
+        const h = img.naturalHeight;
+        x.drawImage(img, 0, h * 0.55, img.naturalWidth, h * 0.45, 0, 0, 24, 24); // bas de l'image, là où se pose le titre
+        const d = x.getImageData(0, 0, 24, 24).data;
+        let r = 0, g = 0, b = 0; for (let i = 0; i < d.length; i += 4) { r += d[i]; g += d[i + 1]; b += d[i + 2]; }
+        const n = d.length / 4, rgb = [r / n, g / n, b / n];
+        teintes.set(cle, rgb); appliquer(rgb);
+      } catch (e) {}
+    };
+    img.complete && img.naturalWidth ? calc() : img.addEventListener("load", calc, { once: true });
+  }
   const couvBloc = (c, items, cls, extra) => '<div class="couv' + (cls ? " " + cls : "") + '"' + couvStyle(c) + ' aria-hidden="' + (extra ? "false" : "true") + '">' + couvHtml(c, items) + (extra || "") + "</div>";
 
   // --- Page « Mes listes »
@@ -1672,19 +1738,29 @@
       const n = restos.filter(VIRTUELLES[id].filtre).length;
       const ico = id === "v-like" ? "👍 " : id === "v-done" ? "✓ " : "☐ ";
       return '<button type="button" class="ls-quick ' + id + '" data-liste="' + id + '"><b>' + ico + VIRTUELLES[id].titre + "</b><span>" + pluriel(n) + "</span></button>";
-    }).join("");
+    }).join("") +
+      // les 3 listes modifiées le plus récemment, puis « See all » (retour à tous mes restos)
+      listes.slice(0, 3).map((l) => '<button type="button" class="ls-quick recente" data-liste="' + l.id + '"><small>' + depuis(l.modifie_le) + "</small><b>" + nomListe(l, l.items.length) + "</b></button>").join("") +
+      '<button type="button" class="ls-quick voir-tout" id="ls-voir-tout" aria-label="See all : voir tous mes restos"><span style="font-size:22px">→</span>See all</button>';
     $("ls-list").innerHTML = listes.length ? listes.map((l) => {
       return '<button type="button" class="ls-card" data-liste="' + l.id + '">' + couvBloc(l, l.items, "mini").replace(/^<div/, "<span").replace(/<\/div>$/, "</span>") +
         '<span class="t"><b>' + nomListe(l, l.items.length) + "</b><span>" + pluriel(l.items.length) + " · " + (l.classement ? "classement" : "liste simple") + "</span></span>" +
         '<span aria-hidden="true" style="color:var(--muted);font-size:22px">›</span></button>';
     }).join("") : '<p class="ls-vide">Pas encore de liste. Crée ta première, par exemple « TOP 5 premier date ».</p>';
   }
+  function depuis(d) {
+    const t = Date.parse(d); if (!t) return "Récente";
+    const j = Math.floor((Date.now() - t) / 86400000);
+    return j <= 0 ? "Modifiée aujourd'hui" : j === 1 ? "Modifiée hier" : j < 30 ? "Il y a " + j + " jours" : "Il y a longtemps";
+  }
   function montrer(id, oui) { $(id).classList.toggle("hidden", !oui); }
   function etatPages(s) {
     s = s || {};
     montrer("pg-listes", !!s.listes);
     listeOuverte = s.liste ?? null;
-    if (listeOuverte === null) { brouillon = null; montrer("pg-liste", false); montrer("lv-bar", false); }
+    // en quittant une liste (bouton retour du téléphone compris), on ferme aussi les feuilles du mode Modifier
+    if (listeOuverte === null || !brouillon) { montrer("bs-pick", false); montrer("bs-couv", false); }
+    if (listeOuverte === null) { brouillon = null; montrer("pg-liste", false); montrer("lv-bar", false); montrer("bs-pick", false); montrer("bs-couv", false); }
     else { montrer("pg-liste", true); renderListe(); }
     if (s.listes) renderListes();
     document.body.style.overflow = s.listes ? "hidden" : "";
@@ -1704,6 +1780,7 @@
   $("menu-listes").onclick = ouvrirListes;
   $("ls-back").onclick = () => history.back();
   $("pg-listes").addEventListener("click", (e) => {
+    if (e.target.closest("#ls-voir-tout")) return history.back();
     const b = e.target.closest("[data-liste]");
     if (b) ouvrirListe(VIRTUELLES[b.dataset.liste] ? b.dataset.liste : Number(b.dataset.liste));
   });
@@ -1731,13 +1808,17 @@
     const c = edit ? brouillon : l;
     const n = c.items.length;
     montrer("lv-bar", edit);
-    let h = '<div class="pg-top"><button type="button" class="rond" id="lv-back" aria-label="Retour">←</button><span style="flex:1"></span></div>';
+    let h = edit ? '<div class="pg-top"><button type="button" class="rond" id="lv-back" aria-label="Retour">←</button><span style="flex:1"></span></div>' : "";
     if (!edit) {
-      if (!l.virtuelle) h += couvBloc(l, l.items);
-      h += '<h1 class="lv-titre" id="lv-titre">' + nomListe(l, n) + "</h1>" +
-        '<span class="lv-info">' + pluriel(n) + (l.virtuelle ? " · liste automatique" : " · " + (l.classement ? "classement" : "liste simple") + " · " + (l.publique ? "🌍 publique" : "🔒 privée")) + "</span>" +
-        '<div class="lv-actions"><button type="button" class="lv-tirer" id="lv-tirer"' + (n ? "" : " disabled") + ">🎲 Tirer au sort</button>" +
-        (l.virtuelle ? "" : '<button type="button" class="lv-mod lv-partager" id="lv-share">↗ Partager</button><button type="button" class="lv-mod" id="lv-mod">✏️ Modifier</button>') + "</div>";
+      h += heroHtml(l, l.items, {
+        idTitre: "lv-titre", titre: esc(l.titre),
+        tag: l.classement ? "🏆 Top " + n : "",
+        info: pluriel(n) + (l.virtuelle ? " · liste automatique" : " · " + (l.publique ? "🌍 publique" : "🔒 privée")),
+        gauche: '<button type="button" class="verre rondv" id="lv-back" aria-label="Retour">←</button>',
+        droite: l.virtuelle ? "" : '<button type="button" class="verre" id="lv-mod">✏️ Modifier</button>',
+      });
+      h += '<div class="lv-actions"><button type="button" class="lv-tirer" id="lv-tirer"' + (n ? "" : " disabled") + ">🎲 Tirer au sort</button>" +
+        (l.virtuelle ? "" : '<button type="button" class="lv-mod lv-partager" id="lv-share">↗ Partager</button>') + "</div>";
       h += n ? '<ol class="lv-items">' + c.items.map((r, i) => itemHtml(r, i, n, false, l.classement)).join("") + "</ol>"
              : '<p class="ls-vide">Cette liste est vide. Ouvre une fiche resto et touche « Ajouter à une liste », ou passe en mode Modifier.</p>';
     } else {
@@ -1752,6 +1833,7 @@
         '<button type="button" class="linkbtn ls-suppr" id="lv-suppr">Supprimer la liste</button>';
     }
     $("lv").innerHTML = h;
+    teinterHero($("lv"));
     // Glisser-déposer (appui sur ≡ puis glisser) en mode modification
     if (edit && window.Sortable && $("lv-ol")) {
       Sortable.create($("lv-ol"), {
@@ -1910,7 +1992,7 @@
   }
   $("bs-couv").addEventListener("click", (e) => {
     const t = e.target;
-    if (t === $("bs-couv") || t.closest("#bs-couv-x")) return fermerCouv();
+    if (t === $("bs-couv") || t.closest("#bs-couv-x") || !brouillon || !couv) return fermerCouv();
     if (t.closest("#couv-tab-emoji") || t.closest("#couv-vers-emoji")) { couv.onglet = "emoji"; return renderCouv(); }
     if (t.closest("#couv-tab-photo")) { couv.onglet = "photo"; return renderCouv(); }
     const emo = t.closest("[data-emo]"); if (emo) return choisirEmoji(emo.dataset.emo);
@@ -1927,9 +2009,9 @@
       toast("Couverture prête : touche Enregistrer");
     }
   });
-  $("couv-autre").addEventListener("input", (e) => { const em = premierEmoji(e.target.value); if (em) choisirEmoji(em); });
+  $("couv-autre").addEventListener("input", (e) => { if (!couv) return; const em = premierEmoji(e.target.value); if (em) choisirEmoji(em); });
   $("couv-fichier").addEventListener("change", async (e) => {
-    const f = e.target.files && e.target.files[0]; if (!f) return;
+    const f = e.target.files && e.target.files[0]; if (!f || !couv) return;
     $("couv-choisir").disabled = true; $("couv-choisir").textContent = "Réduction de la photo…";
     try {
       couv.couverture_photo = await reduirePhoto(f);
@@ -1952,12 +2034,12 @@
     }).join("") || '<p class="ls-vide">Aucun resto ne correspond.</p>';
   }
   function ouvrirPick() { $("bs-pick-q").value = ""; renderPick(); montrer("bs-pick", true); }
-  function fermerPick() { montrer("bs-pick", false); renderListe(); }
+  function fermerPick() { montrer("bs-pick", false); if (listeOuverte !== null) renderListe(); }
   $("bs-pick-q").oninput = renderPick;
   $("bs-pick-ok").onclick = fermerPick;
   $("bs-pick-x").onclick = fermerPick;
   $("bs-pick").addEventListener("click", (e) => {
-    if (e.target === $("bs-pick")) return fermerPick();
+    if (e.target === $("bs-pick") || !brouillon) return fermerPick();
     const b = e.target.closest("[data-pick]"); if (!b) return;
     const i = brouillon.items.findIndex((r) => String(r.id) === b.dataset.pick);
     if (i >= 0) brouillon.items.splice(i, 1);
@@ -2066,12 +2148,13 @@
       $("pub").innerHTML = '<div class="pg-top"><button type="button" class="rond" id="pub-x" aria-label="Fermer">✕</button></div><p class="ls-vide">Cette liste n\'existe pas ou n\'est plus publique.</p>';
     } else {
       const n = data.restos.length;
-      const titre = (data.classement ? '<span class="top-n">TOP ' + n + "</span> " : "") + esc(data.titre);
       $("pub").innerHTML =
-        '<div class="pg-top"><button type="button" class="rond" id="pub-x" aria-label="Fermer">✕</button><span style="flex:1"></span></div>' +
-        couvBloc(data, data.restos) +
-        '<h1 class="lv-titre" id="pub-titre">' + titre + "</h1>" +
-        '<span class="lv-info">' + pluriel(n) + (data.auteur ? " · par " + esc(data.auteur) : "") + "</span>" +
+        heroHtml(data, data.restos, {
+          idTitre: "pub-titre", titre: esc(data.titre),
+          tag: data.classement ? "🏆 Top " + n : "",
+          info: pluriel(n) + (data.auteur ? " · par " + esc(data.auteur) : ""),
+          gauche: '<button type="button" class="verre rondv" id="pub-x" aria-label="Fermer">✕</button>',
+        }) +
         '<ol class="lv-items">' + data.restos.map((r, i) => {
           const k = typeCuisine(r);
           return '<li class="lv-item">' + (data.classement ? '<span class="rang">' + (i + 1) + "</span>" : "") +
@@ -2080,7 +2163,8 @@
             '<span class="pub-liens">' + (r.lien_maps ? '<a href="' + esc(r.lien_maps) + '" target="_blank" rel="noopener" aria-label="Itinéraire">📍</a>' : "") +
             (r.lien_instagram ? '<a href="' + esc(r.lien_instagram) + '" target="_blank" rel="noopener" aria-label="Voir le reel sur Instagram"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg></a>' : "") + "</span></li>";
         }).join("") + "</ol>" +
-        (currentUser ? "" : '<div class="pub-cta"><b>Toi aussi, garde tes pépites</b><span>N!che transforme les reels Instagram en adresses à tester.</span><button type="button" id="pub-go">Découvrir N!che</button></div>');
+        "" + (currentUser ? "" : '<div class="pub-cta"><b>Toi aussi, garde tes pépites</b><span>N!che transforme les reels Instagram en adresses à tester.</span><button type="button" id="pub-go">Découvrir N!che</button></div>');
+      teinterHero($("pub"));
     }
   })();
   $("pg-public").addEventListener("click", (e) => {
