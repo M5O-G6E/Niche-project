@@ -372,7 +372,7 @@
   .sheet-bg { position: fixed; inset: 0; background: rgba(0,0,0,.55); display: flex; align-items: flex-end; justify-content: center; z-index: 40; }
   .sheet { width: 100%; max-width: 460px; background: var(--card); color: var(--ink); border-radius: 24px 24px 0 0; padding: 24px 20px calc(24px + env(safe-area-inset-bottom)); box-sizing: border-box; text-align: center; }
   @media (min-width: 720px) { .sheet-bg { align-items: center; } .sheet { border-radius: 24px; } }
-  .sheet-icon { width: 64px; height: 64px; margin: 0 auto 10px; border-radius: 18px; background: #ff6a33; color: #fff; display: flex; align-items: center; justify-content: center; font: 800 28px "Baloo 2", system-ui, sans-serif; }
+  .sheet-icon { display: block; width: 64px; height: 64px; margin: 0 auto 10px; border-radius: 16px; box-shadow: 0 4px 14px rgba(0,0,0,.25); }
   .sheet h2 { font: 800 24px/1.1 "Baloo 2", system-ui, sans-serif; margin: 0 0 8px; }
   .sheet p { color: var(--muted); font-size: 15px; margin: 8px 0; }
   .sheet p b { color: var(--ink); }
@@ -427,7 +427,7 @@
 
 <div class="sheet-bg hidden" id="sheet-raccourci" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
   <div class="sheet">
-    <div class="sheet-icon" aria-hidden="true">N!</div>
+    <img class="sheet-icon" src="apple-touch-icon.png" alt="" aria-hidden="true">
     <h2 id="sheet-title">Ajoute N!che à ton menu Partager</h2>
     <div id="sheet-ios">
       <p>Un raccourci à installer une seule fois. Ensuite, sur n'importe quel reel : <b>Partager → N!che</b>, et le resto arrive dans ta liste.</p>
