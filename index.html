@@ -14,6 +14,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@800&family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,800;1,9..144,900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
 <style>
   :root {
     --bg: #f6f1ea;
@@ -408,6 +409,87 @@
   .share-banner span { color: var(--muted); font-size: 14px; word-break: break-all; }
   body.portal .share-banner { background: rgba(255,255,255,.08); color: #fff; }
   body.portal .share-banner span { color: rgba(255,255,255,.75); }
+
+  /* ===== TICK-35 / TICK-36 : Mes listes ===== */
+  .pg { position: fixed; inset: 0; z-index: 34; background: var(--bg); color: var(--ink); overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+  .pg-in { max-width: 640px; margin: 0 auto; padding: calc(12px + env(safe-area-inset-top)) 16px calc(110px + env(safe-area-inset-bottom)); display: grid; gap: 14px; align-content: start; }
+  .pg-top { display: flex; align-items: center; gap: 10px; }
+  .pg-top h1 { margin: 0; flex: 1; font-family: Fraunces, Georgia, serif; font-weight: 800; font-size: 28px; letter-spacing: -.5px; }
+  .rond { width: 44px; height: 44px; flex: none; border-radius: 50%; border: 0; background: var(--chip); color: var(--ink); font-size: 20px; cursor: pointer; }
+  .ls-rail { display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+  .ls-rail::-webkit-scrollbar { display: none; }
+  .ls-quick { flex: none; width: 112px; height: 92px; border: 0; border-radius: 18px; padding: 12px; display: flex; flex-direction: column; justify-content: space-between; text-align: left; font: inherit; cursor: pointer; color: #fff; }
+  .ls-quick b { font-size: 15px; } .ls-quick span { font-size: 12px; }
+  .ls-quick.v-like { background: var(--accent); } .ls-quick.v-done { background: var(--ok); }
+  .ls-quick.v-todo { background: var(--accent-soft); color: var(--ink); border: 1.5px solid var(--accent); }
+  .ls-h2 { margin: 6px 0 0; font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .ls-new { min-height: 54px; display: flex; align-items: center; justify-content: center; gap: 8px; border: 1.5px dashed var(--accent); border-radius: 18px; background: transparent; color: var(--accent); font: inherit; font-size: 16px; font-weight: 600; cursor: pointer; }
+  .ls-card { display: flex; gap: 12px; align-items: center; padding: 12px; background: var(--card); border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow); color: var(--ink); font: inherit; text-align: left; cursor: pointer; width: 100%; }
+  .ls-mosa { width: 64px; height: 64px; flex: none; display: grid; grid-template-columns: 1fr 1fr; gap: 2px; border-radius: 12px; overflow: hidden; }
+  .ls-mosa span { background: var(--b, var(--chip)); }
+  .ls-card .t { flex: 1; min-width: 0; display: grid; gap: 4px; }
+  .ls-card .t b { font-family: Fraunces, Georgia, serif; font-weight: 600; font-size: 18px; line-height: 1.2; overflow-wrap: anywhere; }
+  .ls-card .t span { font-size: 13px; color: var(--muted); }
+  .ls-vide { color: var(--muted); font-size: 14px; margin: 4px 2px; }
+  .top-n { color: var(--accent); }
+  .ls-card .t b .top-n { color: var(--accent); font-size: inherit; }
+  .lv-titre { margin: 4px 0 0; font-family: Fraunces, Georgia, serif; font-weight: 800; font-size: 28px; line-height: 1.1; letter-spacing: -.5px; overflow-wrap: anywhere; }
+  .lv-info { font-size: 14px; color: var(--muted); }
+  .lv-actions { display: flex; gap: 8px; }
+  .lv-actions button { flex: 1; min-height: 48px; border: 0; border-radius: 999px; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; }
+  .lv-tirer { background: var(--accent); color: #fff; box-shadow: 0 8px 24px rgba(217,72,28,.35); }
+  .lv-mod { background: var(--ink); color: var(--bg); }
+  .lv-items { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+  .lv-item { display: flex; align-items: center; gap: 10px; min-height: 64px; padding: 8px 8px 8px 12px; background: var(--card); border: 1px solid var(--line); border-radius: 16px; }
+  .lv-item .rang { width: 26px; flex: none; text-align: center; font-family: Fraunces, Georgia, serif; font-weight: 800; font-size: 22px; color: var(--accent); }
+  .lv-item .ico { width: 44px; height: 44px; flex: none; border-radius: 12px; background: var(--b); color: var(--c); display: flex; align-items: center; justify-content: center; }
+  .lv-item .ico svg { width: 26px; height: 26px; }
+  .lv-item .t { flex: 1; min-width: 0; display: grid; text-align: left; background: none; border: 0; padding: 0; color: var(--ink); font: inherit; cursor: pointer; }
+  .lv-item .t b { font-family: Fraunces, Georgia, serif; font-weight: 600; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .lv-item .t span { font-size: 12px; color: var(--muted); }
+  .mv { display: flex; flex-direction: column; flex: none; }
+  .mv button { width: 36px; height: 26px; border: 0; background: transparent; color: var(--ink); font-size: 14px; cursor: pointer; }
+  .mv button:disabled { color: var(--line); cursor: default; }
+  .moins { flex: none; width: 34px; height: 34px; border: 0; border-radius: 50%; background: var(--accent-soft); color: var(--accent); font-size: 18px; font-weight: 700; cursor: pointer; }
+  .badge-edit { justify-self: start; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); background: var(--accent-soft); padding: 4px 8px; border-radius: 999px; }
+  .champ { display: grid; gap: 6px; font-size: 13px; color: var(--muted); }
+  .champ-in { display: flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 12px; background: var(--card); border: 1.5px solid var(--accent); border-radius: 12px; }
+  .champ-in input { flex: 1; min-width: 0; border: 0; background: transparent; color: var(--ink); font: inherit; font-size: 16px; outline: none; }
+  .switch { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 16px; background: var(--card); color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+  .switch .t { flex: 1; display: grid; gap: 2px; } .switch .t b { font-size: 15px; } .switch .t span { font-size: 12px; color: var(--muted); }
+  .switch .sw { flex: none; width: 50px; height: 30px; border-radius: 15px; background: var(--line); position: relative; transition: background .2s; }
+  .switch .sw::after { content: ""; position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25); transition: left .2s; }
+  .switch[aria-checked="true"] .sw { background: var(--accent); } .switch[aria-checked="true"] .sw::after { left: 23px; }
+  .ls-add-resto { min-height: 48px; border: 1.5px dashed var(--accent); border-radius: 16px; background: transparent; color: var(--accent); font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; }
+  .ls-suppr { justify-self: center; color: #c0392b; min-height: 40px; font-size: 14px; font-weight: 600; }
+  .lv-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 36; display: flex; gap: 10px; padding: 12px 16px calc(16px + env(safe-area-inset-bottom)); background: var(--bg); border-top: 1px solid var(--line); }
+  .lv-bar button { flex: 1; min-height: 52px; border-radius: 999px; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer; }
+  .lv-annuler { border: 1.5px solid var(--line); background: var(--card); color: var(--ink); }
+  .lv-ok { flex: 1.3 !important; border: 0; background: var(--accent); color: #fff; box-shadow: 0 8px 24px rgba(217,72,28,.35); }
+  .bs-bg { position: fixed; inset: 0; z-index: 48; background: rgba(0,0,0,.5); display: flex; align-items: flex-end; justify-content: center; }
+  .bs { width: 100%; max-width: 520px; max-height: 86vh; display: flex; flex-direction: column; gap: 12px; background: var(--card); color: var(--ink); border-radius: 24px 24px 0 0; padding: 18px 20px calc(20px + env(safe-area-inset-bottom)); box-sizing: border-box; }
+  .bs h2 { margin: 0; font: 800 24px/1.1 "Baloo 2", system-ui, sans-serif; }
+  .bs-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .bs-scroll { overflow-y: auto; display: grid; gap: 8px; }
+  .bs input[type="text"], .bs input[type="search"] { min-height: 48px; box-sizing: border-box; padding: 0 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font: inherit; font-size: 16px; width: 100%; }
+  .idees { display: flex; flex-wrap: wrap; gap: 8px; }
+  .idees button { min-height: 36px; padding: 0 12px; border: 0; border-radius: 999px; background: var(--chip); color: var(--ink); font: inherit; font-size: 14px; cursor: pointer; }
+  .bs-go { min-height: 52px; border: 0; border-radius: 14px; background: var(--accent); color: #fff; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer; }
+  .coche { display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 6px 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--bg); color: var(--ink); font: inherit; text-align: left; cursor: pointer; width: 100%; }
+  .coche .t { flex: 1; min-width: 0; display: grid; } .coche .t b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .coche .t span { font-size: 12px; color: var(--muted); }
+  .coche .bx { width: 24px; height: 24px; flex: none; border-radius: 7px; border: 2px solid var(--line); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 15px; }
+  .coche[aria-pressed="true"] { border-color: var(--accent); } .coche[aria-pressed="true"] .bx { background: var(--accent); border-color: var(--accent); }
+  .poignee { flex: none; width: 32px; height: 44px; display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 22px; cursor: grab; touch-action: none; }
+  .lv-item.sortable-ghost { opacity: .35; }
+  .lv-item.sortable-chosen { box-shadow: 0 10px 30px rgba(0,0,0,.18); }
+  .lv-partager { background: var(--card) !important; color: var(--ink) !important; border: 1.5px solid var(--line) !important; }
+  body.portal #pg-public h1.lv-titre { font-size: 28px; color: var(--ink); text-shadow: none; }
+  .pub-cta { display: grid; gap: 8px; padding: 16px; border-radius: 18px; background: var(--accent-soft); text-align: center; }
+  .pub-cta b { font: 800 22px/1.1 "Baloo 2", system-ui, sans-serif; }
+  .pub-cta button { min-height: 48px; border: 0; border-radius: 999px; background: var(--accent); color: #fff; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; }
+  .pub-liens { display: flex; gap: 6px; flex: none; }
+  .pub-liens a { min-height: 36px; padding: 0 10px; display: flex; align-items: center; border-radius: 999px; background: var(--chip); color: var(--ink); font-size: 13px; font-weight: 600; text-decoration: none; }
+  .fiche-liste { min-height: 48px; border: 1.5px dashed var(--accent); border-radius: 999px; background: transparent; color: var(--accent); font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; }
 </style>
 </head>
 <body>
@@ -562,7 +644,7 @@
       <div><b id="who"></b><span id="menu-count"></span></div>
     </div>
     <button class="menu-item on" id="menu-restos" type="button" aria-current="page">📍 Mes restos <span class="menu-n" id="menu-n"></span></button>
-    <div class="menu-item off" aria-disabled="true">🛎️ Mes listes <span class="soon">bientôt</span></div>
+    <button class="menu-item" id="menu-listes" type="button">🛎️ Mes listes <span class="menu-n" id="menu-nl"></span></button>
     <div class="menu-item off" aria-disabled="true">🗺️ Carte <span class="soon">bientôt</span></div>
     <button class="menu-item" id="menu-aide" type="button" aria-expanded="false" aria-controls="menu-aide-box">❓ Aide</button>
     <div class="menu-aide hidden" id="menu-aide-box">
@@ -571,6 +653,54 @@
     </div>
     <button class="linkbtn menu-out" id="logout" type="button">Se déconnecter</button>
   </nav>
+</div>
+
+
+<div class="pg hidden" id="pg-listes" role="dialog" aria-modal="true" aria-labelledby="ls-titre">
+  <div class="pg-in">
+    <div class="pg-top"><button type="button" class="rond" id="ls-back" aria-label="Retour">←</button><h1 id="ls-titre">Mes listes</h1></div>
+    <div class="ls-rail" id="ls-rail" role="group" aria-label="Listes automatiques"></div>
+    <h2 class="ls-h2">Toutes mes listes</h2>
+    <button type="button" class="ls-new" id="ls-new">＋ Nouvelle liste</button>
+    <div id="ls-list" style="display:grid;gap:12px"></div>
+  </div>
+</div>
+
+<div class="pg hidden" id="pg-liste" role="dialog" aria-modal="true" aria-labelledby="lv-titre">
+  <div class="pg-in" id="lv"></div>
+</div>
+<div class="pg hidden" id="pg-public" role="dialog" aria-modal="true" aria-labelledby="pub-titre" style="z-index:46">
+  <div class="pg-in" id="pub"></div>
+</div>
+<div class="lv-bar hidden" id="lv-bar">
+  <button type="button" class="lv-annuler" id="lv-annuler">Annuler</button>
+  <button type="button" class="lv-ok" id="lv-ok">Enregistrer</button>
+</div>
+
+<div class="bs-bg hidden" id="bs-new" role="dialog" aria-modal="true" aria-labelledby="bs-new-t">
+  <form class="bs" id="bs-new-form">
+    <h2 id="bs-new-t">Nouvelle liste</h2>
+    <label class="champ">Nom de la liste<input type="text" id="bs-new-nom" maxlength="60" placeholder="premier date" autocomplete="off"></label>
+    <div class="idees" id="bs-new-idees"></div>
+    <div style="display:flex;gap:10px"><button type="button" class="sheet-later" id="bs-new-annuler" style="margin:0">Annuler</button><button type="submit" class="bs-go" style="flex:1">Créer la liste</button></div>
+  </form>
+</div>
+
+<div class="bs-bg hidden" id="bs-add" role="dialog" aria-modal="true" aria-labelledby="bs-add-t">
+  <div class="bs">
+    <div class="bs-head"><h2 id="bs-add-t">Ajouter à une liste</h2><button type="button" class="draw-close" id="bs-add-x" aria-label="Fermer">✕</button></div>
+    <div class="bs-scroll" id="bs-add-list"></div>
+    <button type="button" class="ls-new" id="bs-add-new">＋ Nouvelle liste</button>
+  </div>
+</div>
+
+<div class="bs-bg hidden" id="bs-pick" role="dialog" aria-modal="true" aria-labelledby="bs-pick-t">
+  <div class="bs">
+    <div class="bs-head"><h2 id="bs-pick-t">Ajouter des restos</h2><button type="button" class="draw-close" id="bs-pick-x" aria-label="Fermer">✕</button></div>
+    <input type="search" id="bs-pick-q" placeholder="Chercher dans mes restos…" autocomplete="off" aria-label="Chercher dans mes restos">
+    <div class="bs-scroll" id="bs-pick-list"></div>
+    <button type="button" class="bs-go" id="bs-pick-ok">OK</button>
+  </div>
 </div>
 
 <script>
@@ -1345,6 +1475,7 @@
         (r.lien_instagram ? '<a class="ig" href="' + esc(r.lien_instagram) + '" target="_blank" rel="noopener">Voir le reel</a>' : "") +
       "</div>" +
       (r.lien_maps ? '<a class="fiche-photos" href="' + esc(r.lien_maps) + '" target="_blank" rel="noopener">Voir les photos sur Google Maps →</a>' : "") +
+      '<button type="button" class="fiche-liste" data-id="' + esc(r.id) + '">＋ Ajouter à une liste</button>' +
       '<section class="avis-box" aria-label="Ton avis">' +
         "<h3>Ton avis</h3>" +
         '<div class="avis-row">' +
@@ -1409,6 +1540,346 @@
     setTimeout(() => clearInterval(attendre), 15000);
   }
 
+
+  // ===== TICK-35 / TICK-36 : Mes listes (création, ajout de restos, modification, mode classement) =====
+  let listes = [];          // mes listes, chacune avec ses restos dans l'ordre (items)
+  let listeOuverte = null;  // id de la liste affichée ("v-like", "v-done", "v-todo" pour les listes automatiques)
+  let brouillon = null;     // copie de la liste en cours de modification (null = lecture)
+  let ajoutPour = null;     // resto à ajouter juste après la création d'une liste (depuis une fiche)
+  const IDEES_LISTES = ["premier date", "Pour impressionner", "Midi au bureau", "Pas cher entre potes"];
+  const VIRTUELLES = {
+    "v-like": { titre: "Likés", filtre: (r) => r.avis === true },
+    "v-done": { titre: "Done", filtre: (r) => estDone(r) },
+    "v-todo": { titre: "To do", filtre: (r) => !estDone(r) },
+  };
+  const pluriel = (n) => n + (n > 1 ? " restos" : " resto");
+  const nomListe = (l, n) => (l.classement ? '<span class="top-n">TOP ' + n + "</span> " : "") + esc(l.titre);
+
+  async function chargerListes() {
+    if (!currentUser) return;
+    const { data, error } = await sb.from("listes")
+      .select("id, titre, classement, publique, code_partage, modifie_le, liste_restos(resto_id, position, restos(*))")
+      .eq("user_id", currentUser.id)
+      .order("modifie_le", { ascending: false });
+    if (error) { toast("Impossible de charger tes listes"); return; }
+    listes = (data || []).map((l) => ({
+      ...l,
+      items: (l.liste_restos || []).filter((x) => x.restos).sort((a, b) => a.position - b.position).map((x) => x.restos),
+    }));
+    $("menu-nl").textContent = listes.length || "";
+  }
+  function listeCourante() {
+    if (VIRTUELLES[listeOuverte]) {
+      const v = VIRTUELLES[listeOuverte];
+      return { id: listeOuverte, titre: v.titre, classement: false, virtuelle: true, items: restos.filter(v.filtre) };
+    }
+    return listes.find((l) => l.id === listeOuverte) || null;
+  }
+
+  // --- Page « Mes listes »
+  function renderListes() {
+    $("ls-rail").innerHTML = Object.keys(VIRTUELLES).map((id) => {
+      const n = restos.filter(VIRTUELLES[id].filtre).length;
+      const ico = id === "v-like" ? "👍 " : id === "v-done" ? "✓ " : "☐ ";
+      return '<button type="button" class="ls-quick ' + id + '" data-liste="' + id + '"><b>' + ico + VIRTUELLES[id].titre + "</b><span>" + pluriel(n) + "</span></button>";
+    }).join("");
+    $("ls-list").innerHTML = listes.length ? listes.map((l) => {
+      const mosa = [0, 1, 2, 3].map((k) => '<span class="' + (l.items[k] ? "k-" + typeCuisine(l.items[k]) : "") + '"></span>').join("");
+      return '<button type="button" class="ls-card" data-liste="' + l.id + '"><span class="ls-mosa" aria-hidden="true">' + mosa + '</span>' +
+        '<span class="t"><b>' + nomListe(l, l.items.length) + "</b><span>" + pluriel(l.items.length) + " · " + (l.classement ? "classement" : "liste simple") + "</span></span>" +
+        '<span aria-hidden="true" style="color:var(--muted);font-size:22px">›</span></button>';
+    }).join("") : '<p class="ls-vide">Pas encore de liste. Crée ta première, par exemple « TOP 5 premier date ».</p>';
+  }
+  function montrer(id, oui) { $(id).classList.toggle("hidden", !oui); }
+  function etatPages(s) {
+    s = s || {};
+    montrer("pg-listes", !!s.listes);
+    listeOuverte = s.liste ?? null;
+    if (listeOuverte === null) { brouillon = null; montrer("pg-liste", false); montrer("lv-bar", false); }
+    else { montrer("pg-liste", true); renderListe(); }
+    if (s.listes) renderListes();
+    document.body.style.overflow = s.listes ? "hidden" : "";
+  }
+  async function ouvrirListes() {
+    fermerMenu();
+    await chargerListes();
+    history.pushState({ listes: 1 }, "", location.pathname);
+    etatPages({ listes: 1 });
+  }
+  function ouvrirListe(id) {
+    history.pushState({ listes: 1, liste: id }, "", location.pathname);
+    etatPages({ listes: 1, liste: id });
+    $("pg-liste").scrollTop = 0;
+  }
+  window.addEventListener("popstate", (e) => { if (!(e.state && e.state.fiche)) etatPages(e.state); });
+  $("menu-listes").onclick = ouvrirListes;
+  $("ls-back").onclick = () => history.back();
+  $("pg-listes").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-liste]");
+    if (b) ouvrirListe(VIRTUELLES[b.dataset.liste] ? b.dataset.liste : Number(b.dataset.liste));
+  });
+
+  // --- Page d'une liste (lecture / modification)
+  function itemHtml(r, i, n, edit, classe) {
+    const k = typeCuisine(r);
+    return '<li class="lv-item">' +
+      (classe ? '<span class="rang">' + (i + 1) + "</span>" : "") +
+      '<span class="ico k-' + k + '" aria-hidden="true">' + ICONES[k] + "</span>" +
+      '<button type="button" class="t" data-fiche="' + esc(r.id) + '"' + (edit ? " disabled" : "") + "><b>" + esc(r.nom) + "</b><span>" + [r.zone || r.ville, r.cuisine].filter(Boolean).map(esc).join(" · ") + "</span></button>" +
+      (edit && classe ? '<span class="mv"><button type="button" data-up="' + i + '" aria-label="Monter"' + (i === 0 ? " disabled" : "") + '>▲</button><button type="button" data-down="' + i + '" aria-label="Descendre"' + (i === n - 1 ? " disabled" : "") + ">▼</button></span>" : "") +
+      (edit ? '<span class="poignee" aria-hidden="true" title="Appuie et glisse pour déplacer">≡</span>' : "") +
+      (edit ? '<button type="button" class="moins" data-moins="' + i + '" aria-label="Retirer ' + esc(r.nom) + ' de la liste">−</button>' : '<span aria-hidden="true" style="color:var(--muted);font-size:22px;padding-right:4px">›</span>') +
+      "</li>";
+  }
+  function renderListe() {
+    const l = listeCourante();
+    if (!l) { $("lv").innerHTML = '<p class="ls-vide">Liste introuvable.</p>'; return; }
+    const edit = !!brouillon;
+    const c = edit ? brouillon : l;
+    const n = c.items.length;
+    montrer("lv-bar", edit);
+    let h = '<div class="pg-top"><button type="button" class="rond" id="lv-back" aria-label="Retour">←</button><span style="flex:1"></span></div>';
+    if (!edit) {
+      h += '<h1 class="lv-titre" id="lv-titre">' + nomListe(l, n) + "</h1>" +
+        '<span class="lv-info">' + pluriel(n) + (l.virtuelle ? " · liste automatique" : " · " + (l.classement ? "classement" : "liste simple") + " · " + (l.publique ? "🌍 publique" : "🔒 privée")) + "</span>" +
+        '<div class="lv-actions"><button type="button" class="lv-tirer" id="lv-tirer"' + (n ? "" : " disabled") + ">🎲 Tirer au sort</button>" +
+        (l.virtuelle ? "" : '<button type="button" class="lv-mod lv-partager" id="lv-share">↗ Partager</button><button type="button" class="lv-mod" id="lv-mod">✏️ Modifier</button>') + "</div>";
+      h += n ? '<ol class="lv-items">' + c.items.map((r, i) => itemHtml(r, i, n, false, l.classement)).join("") + "</ol>"
+             : '<p class="ls-vide">Cette liste est vide. Ouvre une fiche resto et touche « Ajouter à une liste », ou passe en mode Modifier.</p>';
+    } else {
+      h += '<span class="badge-edit">Mode modification</span>' +
+        '<label class="champ" for="lv-nom">Nom de la liste<span class="champ-in">' + (c.classement ? '<b class="top-n">TOP ' + n + "</b>" : "") +
+        '<input id="lv-nom" maxlength="60" value="' + esc(c.titre) + '" placeholder="premier date"></span></label>' +
+        '<button type="button" class="switch" id="lv-switch" role="switch" aria-checked="' + c.classement + '"><span class="t"><b>🏆 Mode classement</b><span>Numérote tes restos et ajoute « TOP ' + n + ' » au nom</span></span><span class="sw" aria-hidden="true"></span></button>' +
+        '<button type="button" class="switch" id="lv-pub" role="switch" aria-checked="' + c.publique + '"><span class="t"><b>🌍 Liste publique</b><span>Toute personne qui a le lien peut la voir, même sans compte</span></span><span class="sw" aria-hidden="true"></span></button>' +
+        '<ol class="lv-items" id="lv-ol">' + c.items.map((r, i) => itemHtml(r, i, n, true, c.classement)).join("") + "</ol>" +
+        '<button type="button" class="ls-add-resto" id="lv-add">＋ Ajouter un resto</button>' +
+        '<button type="button" class="linkbtn ls-suppr" id="lv-suppr">Supprimer la liste</button>';
+    }
+    $("lv").innerHTML = h;
+    // Glisser-déposer (appui sur ≡ puis glisser) en mode modification
+    if (edit && window.Sortable && $("lv-ol")) {
+      Sortable.create($("lv-ol"), {
+        handle: ".poignee", animation: 150, delay: 0,
+        onEnd: (ev) => {
+          if (ev.oldIndex === ev.newIndex) return;
+          if ($("lv-nom")) brouillon.titre = $("lv-nom").value;
+          const it = brouillon.items;
+          const [m] = it.splice(ev.oldIndex, 1);
+          it.splice(ev.newIndex, 0, m);
+          renderListe();
+        },
+      });
+    }
+  }
+  $("pg-liste").addEventListener("click", async (e) => {
+    const t = e.target;
+    if (t.closest("#lv-back")) return history.back();
+    const f = t.closest("[data-fiche]");
+    if (f && !brouillon) return ouvrirFiche(f.dataset.fiche);
+    if (t.closest("#lv-tirer")) {
+      const l = listeCourante(); if (!l || !l.items.length) return;
+      const r = l.items[Math.floor(Math.random() * l.items.length)];
+      toast("🎲 Ce soir : " + r.nom);
+      return ouvrirFiche(r.id);
+    }
+    if (t.closest("#lv-share")) return partagerListe();
+    if (t.closest("#lv-mod")) {
+      const l = listeCourante();
+      brouillon = { titre: l.titre, classement: l.classement, publique: l.publique, items: l.items.slice() };
+      return renderListe();
+    }
+    if (!brouillon) return;
+    const nomEl = $("lv-nom"); if (nomEl) brouillon.titre = nomEl.value;
+    if (t.closest("#lv-switch")) { brouillon.classement = !brouillon.classement; return renderListe(); }
+    if (t.closest("#lv-pub")) { brouillon.publique = !brouillon.publique; return renderListe(); }
+    const up = t.closest("[data-up]"), down = t.closest("[data-down]"), moins = t.closest("[data-moins]");
+    const it = brouillon.items;
+    if (up) { const i = +up.dataset.up; [it[i - 1], it[i]] = [it[i], it[i - 1]]; return renderListe(); }
+    if (down) { const i = +down.dataset.down; [it[i + 1], it[i]] = [it[i], it[i + 1]]; return renderListe(); }
+    if (moins) { it.splice(+moins.dataset.moins, 1); return renderListe(); }
+    if (t.closest("#lv-add")) return ouvrirPick();
+    if (t.closest("#lv-suppr")) return supprimerListe();
+  });
+  $("lv-annuler").onclick = () => { brouillon = null; renderListe(); toast("Modifications annulées"); };
+  $("lv-ok").onclick = enregistrerListe;
+
+  async function enregistrerListe() {
+    const l = listeCourante(); if (!l || !brouillon) return;
+    if ($("lv-nom")) brouillon.titre = $("lv-nom").value;
+    const titre = (brouillon.titre || "").trim() || "Ma liste";
+    const ids = brouillon.items.map((r) => r.id);
+    const retires = l.items.map((r) => r.id).filter((id) => !ids.includes(id));
+    $("lv-ok").disabled = true;
+    try {
+      let r = await sb.from("listes").update({ titre, classement: brouillon.classement, publique: brouillon.publique, modifie_le: new Date().toISOString() }).eq("id", l.id);
+      if (r.error) throw r.error;
+      if (retires.length) { r = await sb.from("liste_restos").delete().eq("liste_id", l.id).in("resto_id", retires); if (r.error) throw r.error; }
+      if (ids.length) {
+        r = await sb.from("liste_restos").upsert(ids.map((id, i) => ({ liste_id: l.id, resto_id: id, position: i })), { onConflict: "liste_id,resto_id" });
+        if (r.error) throw r.error;
+      }
+      brouillon = null;
+      await chargerListes();
+      renderListe(); renderListes();
+      toast("Liste enregistrée ✅");
+    } catch (err) {
+      toast("Oups, pas enregistré : " + (err.message || err));
+    } finally { $("lv-ok").disabled = false; }
+  }
+  async function supprimerListe() {
+    const l = listeCourante(); if (!l) return;
+    if (!confirm("Supprimer la liste « " + l.titre + " » ? Les restos restent dans N!che.")) return;
+    const { error } = await sb.from("listes").delete().eq("id", l.id);
+    if (error) return toast("Oups : " + error.message);
+    brouillon = null;
+    await chargerListes();
+    toast("Liste supprimée");
+    history.back();
+  }
+
+  // --- Choisir des restos à ajouter (mode modification)
+  function renderPick() {
+    const q = norm($("bs-pick-q").value || "");
+    const dedans = new Set(brouillon.items.map((r) => String(r.id)));
+    const liste = restos.filter((r) => !q || norm([r.nom, r.zone, r.ville, r.cuisine].join(" ")).includes(q));
+    $("bs-pick-list").innerHTML = liste.map((r) => {
+      const on = dedans.has(String(r.id));
+      return '<button type="button" class="coche" data-pick="' + esc(r.id) + '" aria-pressed="' + on + '"><span class="t"><b>' + esc(r.nom) + "</b><span>" + [r.zone || r.ville, r.cuisine].filter(Boolean).map(esc).join(" · ") + '</span></span><span class="bx" aria-hidden="true">' + (on ? "✓" : "") + "</span></button>";
+    }).join("") || '<p class="ls-vide">Aucun resto ne correspond.</p>';
+  }
+  function ouvrirPick() { $("bs-pick-q").value = ""; renderPick(); montrer("bs-pick", true); }
+  function fermerPick() { montrer("bs-pick", false); renderListe(); }
+  $("bs-pick-q").oninput = renderPick;
+  $("bs-pick-ok").onclick = fermerPick;
+  $("bs-pick-x").onclick = fermerPick;
+  $("bs-pick").addEventListener("click", (e) => {
+    if (e.target === $("bs-pick")) return fermerPick();
+    const b = e.target.closest("[data-pick]"); if (!b) return;
+    const i = brouillon.items.findIndex((r) => String(r.id) === b.dataset.pick);
+    if (i >= 0) brouillon.items.splice(i, 1);
+    else { const r = trouver(b.dataset.pick); if (r) brouillon.items.push(r); }
+    renderPick();
+  });
+
+  // --- Nouvelle liste
+  function ouvrirNouvelle(restoId) {
+    ajoutPour = restoId ?? null;
+    $("bs-new-nom").value = "";
+    $("bs-new-idees").innerHTML = IDEES_LISTES.map((t) => '<button type="button" data-idee="' + esc(t) + '">' + esc(t) + "</button>").join("");
+    montrer("bs-new", true);
+    setTimeout(() => $("bs-new-nom").focus(), 50);
+  }
+  $("ls-new").onclick = () => ouvrirNouvelle(null);
+  $("bs-new-annuler").onclick = () => montrer("bs-new", false);
+  $("bs-new").addEventListener("click", (e) => {
+    if (e.target === $("bs-new")) return montrer("bs-new", false);
+    const b = e.target.closest("[data-idee]"); if (b) $("bs-new-nom").value = b.dataset.idee;
+  });
+  $("bs-new-form").onsubmit = async (e) => {
+    e.preventDefault();
+    const titre = $("bs-new-nom").value.trim() || "Ma liste";
+    const { data, error } = await sb.from("listes").insert({ titre }).select("id").single();
+    if (error) return toast("Oups : " + error.message);
+    if (ajoutPour !== null) {
+      await sb.from("liste_restos").insert({ liste_id: data.id, resto_id: Number(ajoutPour), position: 0 });
+    }
+    montrer("bs-new", false);
+    await chargerListes();
+    if (ajoutPour !== null) { toast("Ajouté à « " + titre + " » ✅"); renderAjout(); ajoutPour = null; return; }
+    renderListes();
+    toast("Liste créée ✅");
+    ouvrirListe(data.id);
+  };
+
+  // --- Depuis une fiche : « Ajouter à une liste »
+  let ajoutResto = null;
+  function renderAjout() {
+    const id = String(ajoutResto);
+    $("bs-add-list").innerHTML = listes.length ? listes.map((l) => {
+      const on = l.items.some((r) => String(r.id) === id);
+      return '<button type="button" class="coche" data-add="' + l.id + '" aria-pressed="' + on + '"><span class="t"><b>' + (l.classement ? "TOP " + l.items.length + " " : "") + esc(l.titre) + "</b><span>" + pluriel(l.items.length) + '</span></span><span class="bx" aria-hidden="true">' + (on ? "✓" : "") + "</span></button>";
+    }).join("") : '<p class="ls-vide">Tu n\'as pas encore de liste. Crée la première ci-dessous.</p>';
+  }
+  async function ouvrirAjout(restoId) {
+    ajoutResto = restoId;
+    await chargerListes();
+    renderAjout();
+    montrer("bs-add", true);
+  }
+  $("bs-add-x").onclick = () => montrer("bs-add", false);
+  $("bs-add-new").onclick = () => ouvrirNouvelle(ajoutResto);
+  $("bs-add").addEventListener("click", async (e) => {
+    if (e.target === $("bs-add")) return montrer("bs-add", false);
+    const b = e.target.closest("[data-add]"); if (!b) return;
+    const l = listes.find((x) => String(x.id) === b.dataset.add); if (!l) return;
+    const dedans = l.items.some((r) => String(r.id) === String(ajoutResto));
+    const res = dedans
+      ? await sb.from("liste_restos").delete().eq("liste_id", l.id).eq("resto_id", Number(ajoutResto))
+      : await sb.from("liste_restos").insert({ liste_id: l.id, resto_id: Number(ajoutResto), position: l.items.length });
+    if (res.error) return toast("Oups : " + res.error.message);
+    await sb.from("listes").update({ modifie_le: new Date().toISOString() }).eq("id", l.id);
+    await chargerListes();
+    renderAjout();
+    toast(dedans ? "Retiré de « " + l.titre + " »" : "Ajouté à « " + l.titre + " » ✅");
+  });
+  $("fiche").addEventListener("click", (e) => {
+    const b = e.target.closest(".fiche-liste");
+    if (b) ouvrirAjout(b.dataset.id);
+  });
+
+  // ===== TICK-37 : partager une liste par lien public =====
+  async function partagerListe() {
+    const l = listeCourante(); if (!l || l.virtuelle) return;
+    if (!l.publique) {
+      if (!confirm("Pour la partager, la liste doit être publique : toute personne qui a le lien pourra la voir. On la rend publique ?")) return;
+      const { error } = await sb.from("listes").update({ publique: true, modifie_le: new Date().toISOString() }).eq("id", l.id);
+      if (error) return toast("Oups : " + error.message);
+      await chargerListes(); renderListe(); renderListes();
+    }
+    const l2 = listeCourante();
+    const url = location.origin + location.pathname + "?liste=" + l2.code_partage;
+    const titre = (l2.classement ? "TOP " + l2.items.length + " " : "") + l2.titre;
+    try {
+      if (navigator.share) { await navigator.share({ title: titre + " · N!che", text: "Ma liste « " + titre + " » sur N!che 🍽️", url }); return; }
+    } catch (e) { if (e && e.name === "AbortError") return; }
+    try { await navigator.clipboard.writeText(url); toast("Lien copié 📋"); }
+    catch (e) { prompt("Copie ce lien :", url); }
+  }
+  // Ouverture d'un lien partagé : …/?liste=<code> (lisible sans compte)
+  (async function lireListePartagee() {
+    const q = new URLSearchParams(location.search);
+    const code = q.get("liste");
+    if (!code) return;
+    q.delete("liste");
+    history.replaceState(null, "", location.pathname + (q.toString() ? "?" + q : ""));
+    montrer("pg-public", true);
+    document.body.style.overflow = "hidden";
+    $("pub").innerHTML = '<p class="ls-vide">Chargement de la liste…</p>';
+    const { data, error } = await sb.rpc("liste_publique", { code });
+    if (error || !data) {
+      $("pub").innerHTML = '<div class="pg-top"><button type="button" class="rond" id="pub-x" aria-label="Fermer">✕</button></div><p class="ls-vide">Cette liste n\'existe pas ou n\'est plus publique.</p>';
+    } else {
+      const n = data.restos.length;
+      const titre = (data.classement ? '<span class="top-n">TOP ' + n + "</span> " : "") + esc(data.titre);
+      $("pub").innerHTML =
+        '<div class="pg-top"><button type="button" class="rond" id="pub-x" aria-label="Fermer">✕</button><span style="flex:1"></span></div>' +
+        '<h1 class="lv-titre" id="pub-titre">' + titre + "</h1>" +
+        '<span class="lv-info">' + pluriel(n) + (data.auteur ? " · par " + esc(data.auteur) : "") + "</span>" +
+        '<ol class="lv-items">' + data.restos.map((r, i) => {
+          const k = typeCuisine(r);
+          return '<li class="lv-item">' + (data.classement ? '<span class="rang">' + (i + 1) + "</span>" : "") +
+            '<span class="ico k-' + k + '" aria-hidden="true">' + ICONES[k] + "</span>" +
+            '<span class="t" style="cursor:default"><b>' + esc(r.nom) + "</b><span>" + [r.zone, r.cuisine].filter(Boolean).map(esc).join(" · ") + "</span></span>" +
+            '<span class="pub-liens">' + (r.lien_maps ? '<a href="' + esc(r.lien_maps) + '" target="_blank" rel="noopener" aria-label="Itinéraire">📍</a>' : "") +
+            (r.lien_instagram ? '<a href="' + esc(r.lien_instagram) + '" target="_blank" rel="noopener" aria-label="Voir le reel sur Instagram"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg></a>' : "") + "</span></li>";
+        }).join("") + "</ol>" +
+        (currentUser ? "" : '<div class="pub-cta"><b>Toi aussi, garde tes pépites</b><span>N!che transforme les reels Instagram en adresses à tester.</span><button type="button" id="pub-go">Découvrir N!che</button></div>');
+    }
+  })();
+  $("pg-public").addEventListener("click", (e) => {
+    if (e.target.closest("#pub-x") || e.target.closest("#pub-go")) { montrer("pg-public", false); document.body.style.overflow = ""; }
+  });
 </script>
 </body>
 </html>
