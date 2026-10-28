@@ -1330,9 +1330,11 @@
   const FACES = { 1: [4], 2: [0, 8], 3: [0, 4, 8], 4: [0, 2, 6, 8], 5: [0, 2, 4, 6, 8], 6: [0, 2, 3, 5, 6, 8] };
   const DUREE_TIRAGE = 1500;
   let drawPool = "todo", drawGagnant = null, drawTic = null, drawFin = null;
+  // drawSource : null = tirage sur l'écran principal (filtres), sinon { titre, items } = tirage dans une liste
+  let drawSource = null, overflowAvantTirage = "";
 
   function drawItems() {
-    const items = filtered();
+    const items = drawSource ? drawSource.items : filtered();
     return drawPool === "todo" ? items.filter((r) => !estDone(r)) : items;
   }
   function faceDe(n) {
@@ -1356,7 +1358,8 @@
     if (!items.length) {
       $("draw-kicker").textContent = "";
       nom.className = "draw-name flick";
-      nom.textContent = drawPool === "todo" ? "Plus rien à tester avec ces filtres" : "Aucun resto avec ces filtres";
+      const ou = drawSource ? "dans cette liste" : "avec ces filtres";
+      nom.textContent = drawPool === "todo" ? "Plus rien à tester " + ou : "Aucun resto " + ou;
       $("draw-actions").classList.add("dim");
       $("draw-info").textContent = "";
       return;
@@ -1388,22 +1391,27 @@
       $("draw-tags").innerHTML = (gagnant.categories || []).map((c) => '<span class="tag">' + esc(c) + "</span>").join("");
       const go = $("draw-go");
       if (gagnant.lien_maps) { go.href = gagnant.lien_maps; go.classList.remove("hidden"); } else go.classList.add("hidden");
-      $("draw-info").textContent = "Tiré au sort parmi " + items.length + (items.length > 1 ? " restos" : " resto") + " (tes filtres sont appliqués)";
+      $("draw-info").textContent = "Tiré au sort parmi " + items.length + (items.length > 1 ? " restos" : " resto") + (drawSource ? " dans « " + drawSource.titre + " »" : " (tes filtres sont appliqués)");
       $("draw-actions").classList.remove("dim");
     }, DUREE_TIRAGE);
   }
-  function ouvrirTirage() {
-    if (!filtered().length) return;
+  function ouvrirTirage(source) {
+    drawSource = source && source.items ? source : null;
+    const tous = drawSource ? drawSource.items : filtered();
+    if (!tous.length) return;
     document.querySelectorAll(".card.pick").forEach((c) => c.classList.remove("pick"));
-    drawPool = filtered().some((r) => !estDone(r)) ? "todo" : "tous";
+    drawPool = tous.some((r) => !estDone(r)) ? "todo" : "tous";
+    document.querySelector('.draw-pool [data-pool="tous"]').textContent = drawSource ? "Toute la liste" : "Toute ma liste";
+    drawGagnant = null;
     $("draw").classList.remove("hidden");
+    overflowAvantTirage = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     lancerTirage();
   }
   function fermerTirage() {
     stopTirage();
     $("draw").classList.add("hidden");
-    document.body.style.overflow = "";
+    document.body.style.overflow = overflowAvantTirage;
   }
 
   // ===== Menu latéral =====
@@ -1430,7 +1438,7 @@
   $("logout").addEventListener("click", fermerMenu);
   $("open-raccourci").addEventListener("click", fermerMenu);
 
-  $("random").onclick = ouvrirTirage;
+  $("random").onclick = () => ouvrirTirage();
   $("draw-close").onclick = fermerTirage;
   $("draw").addEventListener("click", (e) => { if (e.target === $("draw")) fermerTirage(); });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("draw").classList.contains("hidden")) fermerTirage(); });
@@ -1633,7 +1641,11 @@
   }
   function renderListe() {
     const l = listeCourante();
-    if (!l) { $("lv").innerHTML = '<p class="ls-vide">Liste introuvable.</p>'; return; }
+    if (!l) {
+      montrer("lv-bar", false);
+      $("lv").innerHTML = '<div class="pg-top"><button type="button" class="rond" id="lv-back" aria-label="Retour">←</button></div><p class="ls-vide">Liste introuvable.</p>';
+      return;
+    }
     const edit = !!brouillon;
     const c = edit ? brouillon : l;
     const n = c.items.length;
@@ -1679,9 +1691,9 @@
     if (f && !brouillon) return ouvrirFiche(f.dataset.fiche);
     if (t.closest("#lv-tirer")) {
       const l = listeCourante(); if (!l || !l.items.length) return;
-      const r = l.items[Math.floor(Math.random() * l.items.length)];
-      toast("🎲 Ce soir : " + r.nom);
-      return ouvrirFiche(r.id);
+      // on reprend les fiches à jour (statut, avis) depuis la liste principale quand elles y sont
+      const items = l.items.map((r) => trouver(r.id) || r);
+      return ouvrirTirage({ titre: l.titre, items });
     }
     if (t.closest("#lv-share")) return partagerListe();
     if (t.closest("#lv-mod")) {
@@ -1786,6 +1798,8 @@
     }
     montrer("bs-new", false);
     await chargerListes();
+    // filet de sécurité : si le rechargement n'a pas encore la nouvelle liste, on l'ajoute à la main
+    if (!listes.some((l) => l.id === data.id)) listes.unshift({ id: data.id, titre, classement: false, publique: false, items: [] });
     if (ajoutPour !== null) { toast("Ajouté à « " + titre + " » ✅"); renderAjout(); ajoutPour = null; return; }
     renderListes();
     toast("Liste créée ✅");
