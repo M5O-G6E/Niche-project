@@ -202,6 +202,31 @@
   .menu-aide p { margin: 4px 0 8px; }
   .menu-aide .linkbtn { min-height: 36px; }
   .menu-out { margin-top: auto; align-self: flex-start; min-height: 44px; padding: 0 12px; font-size: 15px; }
+  /* TICK-77 : barre de recherche + bouton Filtres, panneau du bas */
+  .search-row { display: flex; gap: 8px; align-items: center; margin: 10px 0 6px; }
+  .search-row .search { margin: 0; flex: 1; min-width: 0; }
+  .flt-btn { flex: none; display: inline-flex; align-items: center; gap: 6px; min-height: 46px; padding: 0 14px; border: 1px solid transparent; border-radius: 999px; background: var(--chip); color: var(--ink); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .flt-btn.on { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+  .flt-n { min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px; background: var(--accent); color: #fff; font-size: 12px; display: inline-flex; align-items: center; justify-content: center; }
+  .flt-bg { position: fixed; inset: 0; z-index: 42; background: rgba(0,0,0,.6); display: flex; align-items: flex-end; justify-content: center; }
+  .flt { width: 100%; max-width: 640px; max-height: 88vh; display: flex; flex-direction: column; background: var(--bg); color: var(--ink); border-radius: 24px 24px 0 0; box-shadow: 0 -10px 40px rgba(0,0,0,.25); }
+  .flt-grip { align-self: center; width: 40px; height: 5px; border-radius: 3px; background: var(--line); margin-top: 8px; }
+  .flt-head { display: flex; align-items: center; justify-content: space-between; padding: 6px 16px 6px 20px; }
+  .flt-head h2 { margin: 0; font: 800 26px/1.1 "Baloo 2", system-ui, sans-serif; }
+  .flt-search { display: flex; align-items: center; gap: 8px; margin: 2px 20px 8px; min-height: 46px; padding: 0 12px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; color: var(--muted); }
+  .flt-search input { flex: 1; min-width: 0; border: 0; background: transparent; color: var(--ink); font: inherit; font-size: 16px; outline: none; }
+  .flt-body { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; padding: 4px 20px 12px; display: grid; gap: 18px; align-content: start; }
+  .fsec h3 { margin: 0 0 8px; font-size: 13px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); display: flex; justify-content: space-between; }
+  .fsel { color: var(--accent); text-transform: none; letter-spacing: 0; }
+  .fchips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .fchip { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 14px; border: 1.5px solid var(--chip); border-radius: 999px; background: var(--chip); color: var(--ink); font: inherit; font-size: 14px; cursor: pointer; }
+  .fchip.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .fcount { min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px; background: var(--card); color: var(--muted); font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; }
+  .fchip.on .fcount { background: rgba(255,255,255,.25); color: #fff; }
+  .fvide { margin: 8px 0; text-align: center; color: var(--muted); font-size: 14px; }
+  .flt-foot { display: flex; gap: 10px; align-items: center; padding: 12px 16px calc(14px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line); }
+  .flt-foot .linkbtn { min-height: 48px; padding: 0 8px; font-size: 15px; font-weight: 600; }
+  .flt-go { flex: 1; min-height: 52px; border: 0; border-radius: 999px; background: var(--accent); color: #fff; font: inherit; font-size: 16px; font-weight: 600; box-shadow: 0 8px 24px rgba(217,72,28,.35); cursor: pointer; }
   /* Cartes compactes (TICK-75) */
   /* Toutes les cartes ont la même hauteur : nom, infos et étiquettes sur une seule ligne chacun (« … » si trop long) */
   .card.compact { display: flex; align-items: center; gap: 12px; padding: 12px 12px 12px 14px; height: 96px; box-sizing: border-box; }
@@ -449,13 +474,13 @@
 
 <div id="app" class="hidden">
 
-<input class="search" id="q" type="search" placeholder="Nom, cuisine, quartier…" autocomplete="off">
-
-<div class="label">Ambiance</div>
-<div class="row" id="cats"></div>
-
-<div class="label">Prix et lieu</div>
-<div class="row" id="prix"></div>
+<div class="search-row">
+  <input class="search" id="q" type="search" placeholder="Nom, cuisine, quartier…" autocomplete="off" aria-label="Rechercher un resto">
+  <button type="button" class="flt-btn" id="flt-open" aria-haspopup="dialog" aria-controls="flt">
+    <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h11M18 6h3M3 12h3M10 12h11M3 18h7M14 18h7"/><circle cx="16" cy="6" r="2"/><circle cx="8" cy="12" r="2"/><circle cx="12" cy="18" r="2"/></svg>
+    Filtres <span class="flt-n hidden" id="flt-n"></span>
+  </button>
+</div>
 
 <div class="bar">
   <span id="count"></span>
@@ -505,6 +530,25 @@
     <div class="fiche-icone" id="fiche-icone" aria-hidden="true"></div>
   </div>
   <div class="fiche-body" id="fiche-body"></div>
+</div>
+
+<div class="flt-bg hidden" id="flt">
+  <div class="flt" role="dialog" aria-modal="true" aria-labelledby="flt-title">
+    <div class="flt-grip" aria-hidden="true"></div>
+    <div class="flt-head">
+      <h2 id="flt-title">Filtres</h2>
+      <button type="button" class="draw-close" id="flt-close" aria-label="Fermer les filtres">✕</button>
+    </div>
+    <label class="flt-search">
+      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="flt-q" type="search" placeholder="Rechercher une ville, une ambiance…" autocomplete="off" aria-label="Rechercher une ville ou une ambiance">
+    </label>
+    <div class="flt-body" id="flt-body"></div>
+    <div class="flt-foot">
+      <button type="button" class="linkbtn" id="flt-reset">Tout effacer</button>
+      <button type="button" class="flt-go" id="flt-go"></button>
+    </div>
+  </div>
 </div>
 
 <div class="menu-bg hidden" id="menu">
@@ -698,7 +742,9 @@
   }
 
   capterPartage();
-  const state = { q: "", cats: new Set(), prix: new Set(), ville: "", statut: "", avis: "" };
+  // TICK-77 : chaque filtre accepte plusieurs choix (ex. deux villes en même temps)
+  const state = { q: "", cats: new Set(), prix: new Set(), villes: new Set(), statuts: new Set(), avis: new Set() };
+  let fltQ = "";
   let restos = [];
   let mode = "login";
   let currentUser = null;
@@ -901,22 +947,59 @@
     return s;
   }
 
+  function villeDe(r) { return r.zone || r.ville || ""; }
+  function nbFiltres() { return state.cats.size + state.prix.size + state.villes.size + state.statuts.size + state.avis.size; }
+  const STATUTS_FLT = [["to do", "To do ☐"], ["done", "Done ✓"]];
+  const AVIS_FLT = [["up", "👍 Aimés"], ["down", "👎 Pas aimés"], ["none", "Pas encore notés"]];
+
+  // Panneau « Filtres » (TICK-77) : recherche en haut, villes combinables avec compteur, « Voir N restos » en direct
   function buildFilters() {
-    const cats = [...new Set(restos.flatMap((r) => r.categories || []))].sort();
-    const villes = [...new Set(restos.map((r) => r.zone || r.ville).filter(Boolean))].sort((a, b) => a.localeCompare(b, "fr", { numeric: true }));
-    const statuts = [...new Set(restos.map((r) => r.statut).filter(Boolean))].sort();
+    const n = nbFiltres();
+    $("flt-n").textContent = n;
+    $("flt-n").classList.toggle("hidden", !n);
+    $("flt-open").classList.toggle("on", n > 0);
+    if ($("flt").classList.contains("hidden")) return;
 
-    const c = $("cats");
-    c.innerHTML = "";
-    if (!cats.length) c.innerHTML = '<span class="sub">Aucune catégorie pour l\'instant</span>';
-    cats.forEach((cat) => c.append(chip(cat, state.cats.has(cat), () => { toggle(state.cats, cat); buildFilters(); render(); })));
+    const q = norm(fltQ.trim());
+    const garde = (txt) => !q || norm(txt).includes(q);
+    const compte = (f) => restos.filter(f).length;
+    const pastille = (groupe, valeur, label, on, nb) =>
+      '<button type="button" class="fchip' + (on ? " on" : "") + '" data-g="' + groupe + '" data-v="' + esc(valeur) + '" aria-pressed="' + on + '">' +
+        esc(label) + (nb === undefined ? "" : ' <span class="fcount">' + nb + "</span>") + "</button>";
+    const section = (titre, nbSel, html) => html ? '<section class="fsec"><h3>' + titre + (nbSel ? ' <span class="fsel">' + nbSel + (nbSel > 1 ? " choisies" : " choisie") + "</span>" : "") + '</h3><div class="fchips">' + html + "</div></section>" : "";
 
-    const p = $("prix");
-    p.innerHTML = "";
-    [1, 2, 3, 4].forEach((n) => p.append(chip("€".repeat(n), state.prix.has(n), () => { toggle(state.prix, n); buildFilters(); render(); })));
-    p.append(select("Ville", villes, state.ville, (v) => { state.ville = v; buildFilters(); render(); }));
-    p.append(select("Statut", statuts, state.statut, (v) => { state.statut = v; buildFilters(); render(); }));
-    p.append(select("Avis", AVIS_FILTRES, state.avis, (v) => { state.avis = v; buildFilters(); render(); }));
+    let html = "";
+    if (!q) {
+      html += section("Statut", state.statuts.size, STATUTS_FLT.map(([v, l]) => pastille("statuts", v, l, state.statuts.has(v), compte((r) => r.statut === v))).join(""));
+      html += section("Avis", state.avis.size, AVIS_FLT.map(([v, l]) => pastille("avis", v, l, state.avis.has(v), compte((r) => avisCle(r) === v))).join(""));
+    }
+    const cats = [...new Set(restos.flatMap((r) => r.categories || []))].sort((a, b) => a.localeCompare(b, "fr"));
+    html += section("Ambiance", [...state.cats].length, cats.filter(garde).map((c) => pastille("cats", c, c, state.cats.has(c))).join(""));
+    if (!q) html += section("Prix", state.prix.size, [1, 2, 3, 4].map((p) => pastille("prix", p, "€".repeat(p), state.prix.has(p), compte((r) => r.niveau_prix === p))).join(""));
+    const villes = [...new Set(restos.map(villeDe).filter(Boolean))].sort((a, b) => a.localeCompare(b, "fr", { numeric: true }));
+    html += section("Ville", state.villes.size, villes.filter(garde).map((v) => pastille("villes", v, v, state.villes.has(v), compte((r) => villeDe(r) === v))).join(""));
+    if (!html) html = '<p class="fvide">Aucune ville ni ambiance ne correspond.</p>';
+    $("flt-body").innerHTML = html;
+
+    const nb = filtered().length;
+    $("flt-go").textContent = nb ? "Voir " + nb + (nb > 1 ? " restos" : " resto") : "Aucun resto";
+  }
+  function avisCle(r) { return r.avis === true ? "up" : r.avis === false ? "down" : "none"; }
+  function ouvrirFiltres() {
+    fltQ = ""; $("flt-q").value = "";
+    $("flt").classList.remove("hidden");
+    document.body.style.overflow = "hidden";
+    buildFilters();
+  }
+  function fermerFiltres() {
+    $("flt").classList.add("hidden");
+    document.body.style.overflow = "";
+    buildFilters();
+    render();
+  }
+  function toutEffacer() {
+    state.cats.clear(); state.prix.clear(); state.villes.clear(); state.statuts.clear(); state.avis.clear();
+    buildFilters(); render();
   }
 
   function toggle(set, v) { set.has(v) ? set.delete(v) : set.add(v); }
@@ -927,11 +1010,9 @@
       if (q && !norm([r.nom, r.cuisine, r.adresse, r.ville, r.zone].join(" ")).includes(q)) return false;
       if (state.cats.size && !(r.categories || []).some((c) => state.cats.has(c))) return false;
       if (state.prix.size && !state.prix.has(r.niveau_prix)) return false;
-      if (state.ville && (r.zone || r.ville) !== state.ville) return false;
-      if (state.statut && r.statut !== state.statut) return false;
-      if (state.avis === "Aimés" && r.avis !== true) return false;
-      if (state.avis === "Pas aimés" && r.avis !== false) return false;
-      if (state.avis === "Pas encore notés" && (r.avis === true || r.avis === false)) return false;
+      if (state.villes.size && !state.villes.has(villeDe(r))) return false;
+      if (state.statuts.size && !state.statuts.has(r.statut)) return false;
+      if (state.avis.size && !state.avis.has(avisCle(r))) return false;
       return true;
     });
   }
@@ -998,7 +1079,6 @@
   });
 
   // TICK-13 : avis 👍 / 👎 (toucher à nouveau le même pouce retire l'avis)
-  const AVIS_FILTRES = ["Aimés", "Pas aimés", "Pas encore notés"];
   async function changerAvis(id, aime) {
     const r = restos.find((x) => String(x.id) === String(id));
     if (!r || !currentUser) return;
@@ -1098,10 +1178,24 @@
 
   $("q").addEventListener("input", (e) => { state.q = e.target.value; render(); });
   $("reset").onclick = () => {
-    state.q = ""; state.cats.clear(); state.prix.clear(); state.ville = ""; state.statut = ""; state.avis = "";
-    $("q").value = "";
-    buildFilters(); render();
+    state.q = ""; $("q").value = "";
+    toutEffacer();
   };
+  $("flt-open").onclick = ouvrirFiltres;
+  $("flt-close").onclick = fermerFiltres;
+  $("flt-go").onclick = fermerFiltres;
+  $("flt-reset").onclick = toutEffacer;
+  $("flt").addEventListener("click", (e) => {
+    if (e.target === $("flt")) return fermerFiltres();
+    const b = e.target.closest(".fchip");
+    if (!b) return;
+    const g = b.dataset.g;
+    const v = g === "prix" ? Number(b.dataset.v) : b.dataset.v;
+    toggle(state[g], v);
+    buildFilters(); render();
+  });
+  $("flt-q").addEventListener("input", (e) => { fltQ = e.target.value; buildFilters(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("flt").classList.contains("hidden")) fermerFiltres(); });
   // ===== TICK-51 : tirage « On mange où ? » dans une fenêtre, avec un dé (1,5 s) =====
   const FACES = { 1: [4], 2: [0, 8], 3: [0, 4, 8], 4: [0, 2, 6, 8], 5: [0, 2, 4, 6, 8], 6: [0, 2, 3, 5, 6, 8] };
   const DUREE_TIRAGE = 1500;
