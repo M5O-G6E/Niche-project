@@ -489,6 +489,35 @@
   .pub-cta button { min-height: 48px; border: 0; border-radius: 999px; background: var(--accent); color: #fff; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; }
   .pub-liens { display: flex; gap: 6px; flex: none; }
   .pub-liens a { min-height: 36px; padding: 0 10px; display: flex; align-items: center; border-radius: 999px; background: var(--chip); color: var(--ink); font-size: 13px; font-weight: 600; text-decoration: none; }
+  /* TICK-82 : couverture de liste */
+  .couv { position: relative; height: 160px; border-radius: 20px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: var(--chip); flex: none; }
+  .couv img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .couv .emo { font-size: 72px; line-height: 1; }
+  .couv-mosa { position: absolute; inset: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 2px; }
+  .couv-mosa span { background: var(--b, var(--chip)); color: var(--c); display: flex; align-items: center; justify-content: center; }
+  .couv-mosa svg { width: 34px; height: 34px; }
+  .couv.mini { width: 64px; height: 64px; border-radius: 12px; }
+  .couv.mini .emo { font-size: 32px; }
+  .couv.mini .couv-mosa svg { width: 18px; height: 18px; }
+  .couv-btn { position: absolute; right: 12px; bottom: 12px; min-height: 40px; padding: 0 14px; border: 0; border-radius: 999px; background: #fff; color: #1f1a17; font: inherit; font-size: 14px; font-weight: 600; box-shadow: 0 6px 18px rgba(0,0,0,.15); cursor: pointer; }
+  .couv-onglets { display: flex; gap: 4px; padding: 4px; background: var(--chip); border-radius: 14px; }
+  .couv-onglets button { flex: 1; min-height: 40px; border: 0; border-radius: 10px; background: transparent; color: var(--ink); font: inherit; font-size: 15px; font-weight: 700; cursor: pointer; }
+  .couv-onglets button[aria-selected="true"] { background: var(--card); color: var(--accent); }
+  .couv-emojis { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+  .couv-emojis button { min-height: 46px; border: 2px solid var(--line); border-radius: 12px; background: var(--card); font-size: 24px; line-height: 1; cursor: pointer; }
+  .couv-emojis button[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+  .couv-couleurs { display: flex; flex-wrap: wrap; gap: 10px; }
+  .couv-couleurs button { width: 36px; height: 36px; border-radius: 50%; border: 0; cursor: pointer; box-shadow: inset 0 0 0 1px rgba(0,0,0,.15); }
+  .couv-couleurs button[aria-pressed="true"] { box-shadow: 0 0 0 3px var(--card), 0 0 0 5px var(--ink); }
+  .couv-lbl { font-size: 13px; font-weight: 600; color: var(--muted); }
+  .couv-photo { min-height: 56px; display: flex; align-items: center; justify-content: center; gap: 8px; border: 1.5px dashed var(--accent); border-radius: 16px; background: transparent; color: var(--accent); font: inherit; font-size: 16px; font-weight: 600; cursor: pointer; }
+  .couv-photo:disabled { border-color: var(--line); color: var(--muted); cursor: default; }
+  .couv-jauge { height: 6px; border-radius: 3px; background: var(--chip); overflow: hidden; }
+  .couv-jauge i { display: block; height: 100%; border-radius: 3px; background: var(--ok); }
+  .couv-jauge.plein i { background: var(--accent); }
+  .couv-alerte { display: grid; gap: 8px; padding: 12px 14px; border-radius: 14px; background: var(--accent-soft); color: var(--ink); font-size: 13px; line-height: 1.4; }
+  .couv-alerte b { font-size: 15px; }
+  .couv-alerte button { justify-self: start; min-height: 38px; padding: 0 14px; border: 0; border-radius: 999px; background: var(--accent); color: #fff; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
   .fiche-liste { min-height: 48px; border: 1.5px dashed var(--accent); border-radius: 999px; background: transparent; color: var(--accent); font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; }
 </style>
 </head>
@@ -691,6 +720,42 @@
     <div class="bs-head"><h2 id="bs-add-t">Ajouter à une liste</h2><button type="button" class="draw-close" id="bs-add-x" aria-label="Fermer">✕</button></div>
     <div class="bs-scroll" id="bs-add-list"></div>
     <button type="button" class="ls-new" id="bs-add-new">＋ Nouvelle liste</button>
+  </div>
+</div>
+
+<div class="bs-bg hidden" id="bs-couv" role="dialog" aria-modal="true" aria-labelledby="bs-couv-t">
+  <div class="bs">
+    <div class="bs-head"><h2 id="bs-couv-t">Couverture</h2><button type="button" class="draw-close" id="bs-couv-x" aria-label="Fermer">✕</button></div>
+    <div class="bs-scroll" style="gap:12px">
+      <div class="couv" id="couv-apercu" aria-label="Aperçu de la couverture" style="height:132px"></div>
+      <div class="couv-onglets" role="tablist">
+        <button type="button" role="tab" id="couv-tab-emoji" aria-selected="true">😀 Emoji</button>
+        <button type="button" role="tab" id="couv-tab-photo" aria-selected="false">📷 Photo</button>
+      </div>
+      <div id="couv-p-emoji" style="display:grid;gap:12px">
+        <span class="couv-lbl">Emoji</span>
+        <div class="couv-emojis" id="couv-emojis"></div>
+        <input type="text" id="couv-autre" maxlength="16" placeholder="Ou tape un autre emoji ici…" aria-label="Autre emoji" autocomplete="off">
+        <span class="couv-lbl">Couleur de fond</span>
+        <div class="couv-couleurs" id="couv-couleurs"></div>
+      </div>
+      <div id="couv-p-photo" class="hidden" style="display:grid;gap:12px">
+        <button type="button" class="couv-photo" id="couv-choisir">📷 Choisir une photo</button>
+        <input type="file" id="couv-fichier" accept="image/*" hidden>
+        <div style="display:grid;gap:6px">
+          <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--muted)"><span>Tes photos de couverture</span><b id="couv-compteur"></b></div>
+          <div class="couv-jauge" id="couv-jauge"><i></i></div>
+          <span style="font-size:12px;color:var(--muted)">La photo est réduite automatiquement pour rester légère.</span>
+        </div>
+        <div class="couv-alerte hidden" id="couv-alerte" role="alert">
+          <b>Tu as déjà déposé 10 photos 📸</b>
+          <span>C'est le maximum pour l'instant, pour que N!che reste rapide. Choisis un emoji et une couleur, ou remplace la photo d'une autre liste.</span>
+          <button type="button" id="couv-vers-emoji">Passer aux emojis</button>
+        </div>
+      </div>
+    </div>
+    <button type="button" class="bs-go" id="couv-ok">Valider</button>
+    <button type="button" class="linkbtn" id="couv-auto" style="justify-self:center;min-height:36px">Revenir à la couverture automatique</button>
   </div>
 </div>
 
@@ -1566,7 +1631,7 @@
   async function chargerListes() {
     if (!currentUser) return;
     const { data, error } = await sb.from("listes")
-      .select("id, titre, classement, publique, code_partage, modifie_le, liste_restos(resto_id, position, restos(*))")
+      .select("id, titre, classement, publique, code_partage, modifie_le, couverture_emoji, couverture_fond, couverture_photo, liste_restos(resto_id, position, restos(*))")
       .eq("user_id", currentUser.id)
       .order("modifie_le", { ascending: false });
     if (error) { toast("Impossible de charger tes listes"); return; }
@@ -1584,6 +1649,23 @@
     return listes.find((l) => l.id === listeOuverte) || null;
   }
 
+  // --- TICK-82 : couverture (emoji + fond, photo, ou mosaïque automatique)
+  const COUV_EMOJIS = ["🍕", "🍣", "🍔", "🥐", "🍷", "🍜", "🌮", "🥗", "❤️", "🔥", "🥂", "🍝"];
+  const COUV_COULEURS = [["Tomate", "#d9481c"], ["Pêche", "#fbe4da"], ["Crème", "#f6efe6"], ["Moutarde", "#f2c14e"], ["Sauge", "#a9c8a4"], ["Vert", "#2f7d4f"], ["Bleu nuit", "#24324a"], ["Encre", "#1f1a17"]];
+  const MAX_PHOTOS = 10;
+  const photoOk = (p) => typeof p === "string" && p.startsWith("data:image/jpeg;base64,");
+  const fondOk = (f) => (/^#[0-9a-f]{6}$/i.test(f || "") ? f : "#fbe4da");
+  function couvHtml(c, items, mini) {
+    if (photoOk(c.couverture_photo)) return '<img src="' + c.couverture_photo + '" alt="">';
+    if (c.couverture_emoji) return '<span class="emo">' + esc(c.couverture_emoji) + "</span>";
+    return '<span class="couv-mosa">' + [0, 1, 2, 3].map((k) => {
+      const r = items[k]; const t = r ? typeCuisine(r) : "";
+      return '<span class="' + (t ? "k-" + t : "") + '">' + (t ? ICONES[t] : "") + "</span>";
+    }).join("") + "</span>";
+  }
+  const couvStyle = (c) => (!photoOk(c.couverture_photo) && c.couverture_emoji ? ' style="background:' + fondOk(c.couverture_fond) + '"' : "");
+  const couvBloc = (c, items, cls, extra) => '<div class="couv' + (cls ? " " + cls : "") + '"' + couvStyle(c) + ' aria-hidden="' + (extra ? "false" : "true") + '">' + couvHtml(c, items) + (extra || "") + "</div>";
+
   // --- Page « Mes listes »
   function renderListes() {
     $("ls-rail").innerHTML = Object.keys(VIRTUELLES).map((id) => {
@@ -1592,8 +1674,7 @@
       return '<button type="button" class="ls-quick ' + id + '" data-liste="' + id + '"><b>' + ico + VIRTUELLES[id].titre + "</b><span>" + pluriel(n) + "</span></button>";
     }).join("");
     $("ls-list").innerHTML = listes.length ? listes.map((l) => {
-      const mosa = [0, 1, 2, 3].map((k) => '<span class="' + (l.items[k] ? "k-" + typeCuisine(l.items[k]) : "") + '"></span>').join("");
-      return '<button type="button" class="ls-card" data-liste="' + l.id + '"><span class="ls-mosa" aria-hidden="true">' + mosa + '</span>' +
+      return '<button type="button" class="ls-card" data-liste="' + l.id + '">' + couvBloc(l, l.items, "mini").replace(/^<div/, "<span").replace(/<\/div>$/, "</span>") +
         '<span class="t"><b>' + nomListe(l, l.items.length) + "</b><span>" + pluriel(l.items.length) + " · " + (l.classement ? "classement" : "liste simple") + "</span></span>" +
         '<span aria-hidden="true" style="color:var(--muted);font-size:22px">›</span></button>';
     }).join("") : '<p class="ls-vide">Pas encore de liste. Crée ta première, par exemple « TOP 5 premier date ».</p>';
@@ -1652,6 +1733,7 @@
     montrer("lv-bar", edit);
     let h = '<div class="pg-top"><button type="button" class="rond" id="lv-back" aria-label="Retour">←</button><span style="flex:1"></span></div>';
     if (!edit) {
+      if (!l.virtuelle) h += couvBloc(l, l.items);
       h += '<h1 class="lv-titre" id="lv-titre">' + nomListe(l, n) + "</h1>" +
         '<span class="lv-info">' + pluriel(n) + (l.virtuelle ? " · liste automatique" : " · " + (l.classement ? "classement" : "liste simple") + " · " + (l.publique ? "🌍 publique" : "🔒 privée")) + "</span>" +
         '<div class="lv-actions"><button type="button" class="lv-tirer" id="lv-tirer"' + (n ? "" : " disabled") + ">🎲 Tirer au sort</button>" +
@@ -1659,7 +1741,8 @@
       h += n ? '<ol class="lv-items">' + c.items.map((r, i) => itemHtml(r, i, n, false, l.classement)).join("") + "</ol>"
              : '<p class="ls-vide">Cette liste est vide. Ouvre une fiche resto et touche « Ajouter à une liste », ou passe en mode Modifier.</p>';
     } else {
-      h += '<span class="badge-edit">Mode modification</span>' +
+      h += couvBloc(c, c.items, "", '<button type="button" class="couv-btn" id="lv-couv">📷 Changer la couverture</button>') +
+        '<span class="badge-edit">Mode modification</span>' +
         '<label class="champ" for="lv-nom">Nom de la liste<span class="champ-in">' + (c.classement ? '<b class="top-n">TOP ' + n + "</b>" : "") +
         '<input id="lv-nom" maxlength="60" value="' + esc(c.titre) + '" placeholder="premier date"></span></label>' +
         '<button type="button" class="switch" id="lv-switch" role="switch" aria-checked="' + c.classement + '"><span class="t"><b>🏆 Mode classement</b><span>Numérote tes restos et ajoute « TOP ' + n + ' » au nom</span></span><span class="sw" aria-hidden="true"></span></button>' +
@@ -1698,7 +1781,8 @@
     if (t.closest("#lv-share")) return partagerListe();
     if (t.closest("#lv-mod")) {
       const l = listeCourante();
-      brouillon = { titre: l.titre, classement: l.classement, publique: l.publique, items: l.items.slice() };
+      brouillon = { titre: l.titre, classement: l.classement, publique: l.publique, items: l.items.slice(),
+        couverture_emoji: l.couverture_emoji || null, couverture_fond: l.couverture_fond || null, couverture_photo: l.couverture_photo || null };
       return renderListe();
     }
     if (!brouillon) return;
@@ -1711,6 +1795,7 @@
     if (down) { const i = +down.dataset.down; [it[i + 1], it[i]] = [it[i], it[i + 1]]; return renderListe(); }
     if (moins) { it.splice(+moins.dataset.moins, 1); return renderListe(); }
     if (t.closest("#lv-add")) return ouvrirPick();
+    if (t.closest("#lv-couv")) return ouvrirCouv();
     if (t.closest("#lv-suppr")) return supprimerListe();
   });
   $("lv-annuler").onclick = () => { brouillon = null; renderListe(); toast("Modifications annulées"); };
@@ -1724,7 +1809,8 @@
     const retires = l.items.map((r) => r.id).filter((id) => !ids.includes(id));
     $("lv-ok").disabled = true;
     try {
-      let r = await sb.from("listes").update({ titre, classement: brouillon.classement, publique: brouillon.publique, modifie_le: new Date().toISOString() }).eq("id", l.id);
+      let r = await sb.from("listes").update({ titre, classement: brouillon.classement, publique: brouillon.publique, modifie_le: new Date().toISOString(),
+        couverture_emoji: brouillon.couverture_emoji, couverture_fond: brouillon.couverture_fond, couverture_photo: brouillon.couverture_photo }).eq("id", l.id);
       if (r.error) throw r.error;
       if (retires.length) { r = await sb.from("liste_restos").delete().eq("liste_id", l.id).in("resto_id", retires); if (r.error) throw r.error; }
       if (ids.length) {
@@ -1736,7 +1822,10 @@
       renderListe(); renderListes();
       toast("Liste enregistrée ✅");
     } catch (err) {
-      toast("Oups, pas enregistré : " + (err.message || err));
+      const msg = String(err.message || err);
+      if (msg.includes("limite_photos")) toast("Tu as déjà 10 photos de couverture 📸 Choisis un emoji pour celle-ci.");
+      else if (msg.includes("couverture_photo_ok")) toast("Cette photo est trop lourde, essaie-en une autre.");
+      else toast("Oups, pas enregistré : " + msg);
     } finally { $("lv-ok").disabled = false; }
   }
   async function supprimerListe() {
@@ -1749,6 +1838,108 @@
     toast("Liste supprimée");
     history.back();
   }
+
+  // --- TICK-82 : feuille « Couverture »
+  let couv = null; // copie de travail : { couverture_emoji, couverture_fond, couverture_photo, onglet }
+  function photosAilleurs() {
+    return listes.filter((x) => x.id !== listeOuverte && x.couverture_photo).length;
+  }
+  function renderCouv() {
+    const ap = $("couv-apercu");
+    ap.innerHTML = couvHtml(couv, brouillon.items);
+    ap.style.background = !photoOk(couv.couverture_photo) && couv.couverture_emoji ? fondOk(couv.couverture_fond) : "";
+    const surEmoji = couv.onglet === "emoji";
+    $("couv-tab-emoji").setAttribute("aria-selected", surEmoji);
+    $("couv-tab-photo").setAttribute("aria-selected", !surEmoji);
+    montrer("couv-p-emoji", surEmoji);
+    montrer("couv-p-photo", !surEmoji);
+    const modeEmoji = !couv.couverture_photo && couv.couverture_emoji;
+    $("couv-emojis").innerHTML = COUV_EMOJIS.map((e) => '<button type="button" data-emo="' + e + '" aria-pressed="' + (modeEmoji && couv.couverture_emoji === e) + '" aria-label="Emoji ' + e + '">' + e + "</button>").join("");
+    $("couv-couleurs").innerHTML = COUV_COULEURS.map(([n, v]) => '<button type="button" data-fond="' + v + '" aria-label="' + n + '" aria-pressed="' + (fondOk(couv.couverture_fond) === v) + '" style="background:' + v + '"></button>').join("");
+    const n = photosAilleurs() + (couv.couverture_photo ? 1 : 0);
+    const plein = photosAilleurs() >= MAX_PHOTOS;
+    $("couv-compteur").textContent = Math.min(n, MAX_PHOTOS) + " / " + MAX_PHOTOS;
+    $("couv-jauge").classList.toggle("plein", n >= MAX_PHOTOS);
+    $("couv-jauge").firstElementChild.style.width = Math.min(100, n * 100 / MAX_PHOTOS) + "%";
+    $("couv-choisir").disabled = plein;
+    montrer("couv-alerte", plein);
+  }
+  function ouvrirCouv() {
+    couv = { couverture_emoji: brouillon.couverture_emoji, couverture_fond: brouillon.couverture_fond, couverture_photo: brouillon.couverture_photo,
+      onglet: brouillon.couverture_photo ? "photo" : "emoji" };
+    $("couv-autre").value = "";
+    renderCouv();
+    montrer("bs-couv", true);
+  }
+  const fermerCouv = () => montrer("bs-couv", false);
+  function premierEmoji(txt) {
+    txt = (txt || "").trim(); if (!txt) return "";
+    if (window.Intl && Intl.Segmenter) { for (const s of new Intl.Segmenter("fr", { granularity: "grapheme" }).segment(txt)) return s.segment; }
+    return Array.from(txt).slice(0, 2).join("");
+  }
+  function choisirEmoji(e) {
+    couv.couverture_emoji = e;
+    if (!couv.couverture_fond) couv.couverture_fond = "#fbe4da";
+    couv.couverture_photo = null; // repasser en emoji libère une place photo
+    renderCouv();
+  }
+  // Réduit la photo dans le téléphone : 600 px de large, recadrée en 3:2 au centre, JPEG qualité 70 %
+  function reduirePhoto(file) {
+    return new Promise((ok, ko) => {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        const essais = [[600, 0.7], [600, 0.55], [480, 0.55]];
+        for (const [L, q] of essais) {
+          const H = Math.round(L * 2 / 3);
+          const ratio = Math.max(L / img.naturalWidth, H / img.naturalHeight);
+          const w = img.naturalWidth * ratio, h = img.naturalHeight * ratio;
+          const cv = document.createElement("canvas"); cv.width = L; cv.height = H;
+          const ctx = cv.getContext("2d");
+          ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, L, H);
+          ctx.drawImage(img, (L - w) / 2, (H - h) / 2, w, h);
+          const data = cv.toDataURL("image/jpeg", q);
+          if (photoOk(data) && data.length <= 140000) return ok(data);
+        }
+        ko(new Error("trop lourde"));
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); ko(new Error("format")); };
+      img.src = url;
+    });
+  }
+  $("bs-couv").addEventListener("click", (e) => {
+    const t = e.target;
+    if (t === $("bs-couv") || t.closest("#bs-couv-x")) return fermerCouv();
+    if (t.closest("#couv-tab-emoji") || t.closest("#couv-vers-emoji")) { couv.onglet = "emoji"; return renderCouv(); }
+    if (t.closest("#couv-tab-photo")) { couv.onglet = "photo"; return renderCouv(); }
+    const emo = t.closest("[data-emo]"); if (emo) return choisirEmoji(emo.dataset.emo);
+    const fd = t.closest("[data-fond]");
+    if (fd) { couv.couverture_fond = fd.dataset.fond; if (!couv.couverture_emoji) couv.couverture_emoji = "🍽️"; couv.couverture_photo = null; return renderCouv(); }
+    if (t.closest("#couv-choisir")) { if (photosAilleurs() >= MAX_PHOTOS) return renderCouv(); $("couv-fichier").value = ""; return $("couv-fichier").click(); }
+    if (t.closest("#couv-auto")) { couv.couverture_emoji = couv.couverture_fond = couv.couverture_photo = null; return renderCouv(); }
+    if (t.closest("#couv-ok")) {
+      brouillon.couverture_emoji = couv.couverture_emoji || null;
+      brouillon.couverture_fond = couv.couverture_emoji ? fondOk(couv.couverture_fond) : null;
+      brouillon.couverture_photo = couv.couverture_photo || null;
+      if (brouillon.couverture_photo) { brouillon.couverture_emoji = null; brouillon.couverture_fond = null; }
+      fermerCouv(); renderListe();
+      toast("Couverture prête : touche Enregistrer");
+    }
+  });
+  $("couv-autre").addEventListener("input", (e) => { const em = premierEmoji(e.target.value); if (em) choisirEmoji(em); });
+  $("couv-fichier").addEventListener("change", async (e) => {
+    const f = e.target.files && e.target.files[0]; if (!f) return;
+    $("couv-choisir").disabled = true; $("couv-choisir").textContent = "Réduction de la photo…";
+    try {
+      couv.couverture_photo = await reduirePhoto(f);
+    } catch (err) {
+      toast(err.message === "format" ? "Format de photo non pris en charge, essaie une autre photo." : "Cette photo est trop lourde, essaie-en une autre.");
+    } finally {
+      $("couv-choisir").textContent = "📷 Choisir une photo";
+      renderCouv();
+    }
+  });
 
   // --- Choisir des restos à ajouter (mode modification)
   function renderPick() {
@@ -1878,6 +2069,7 @@
       const titre = (data.classement ? '<span class="top-n">TOP ' + n + "</span> " : "") + esc(data.titre);
       $("pub").innerHTML =
         '<div class="pg-top"><button type="button" class="rond" id="pub-x" aria-label="Fermer">✕</button><span style="flex:1"></span></div>' +
+        couvBloc(data, data.restos) +
         '<h1 class="lv-titre" id="pub-titre">' + titre + "</h1>" +
         '<span class="lv-info">' + pluriel(n) + (data.auteur ? " · par " + esc(data.auteur) : "") + "</span>" +
         '<ol class="lv-items">' + data.restos.map((r, i) => {
