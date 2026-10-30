@@ -536,6 +536,33 @@
   .couv-alerte b { font-size: 15px; }
   .couv-alerte button { justify-self: start; min-height: 38px; padding: 0 14px; border: 0; border-radius: 999px; background: var(--accent); color: #fff; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
   .fiche-liste { min-height: 48px; border: 1.5px dashed var(--accent); border-radius: 999px; background: transparent; color: var(--accent); font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; }
+
+  /* TICK-80 : ajout manuel d'un resto (bouton ＋ et fenêtre) */
+  body { padding-bottom: calc(170px + env(safe-area-inset-bottom)); }
+  .add-fab { position: fixed; right: max(20px, calc((100vw - 980px) / 2 + 20px)); bottom: calc(96px + env(safe-area-inset-bottom)); z-index: 21; width: 60px; height: 60px; border-radius: 50%; border: 0; background: var(--ink); color: var(--bg); display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 26px rgba(31,26,23,.35); cursor: pointer; }
+  .aj-sub { margin: 4px 0 0; font-size: 14px; color: var(--muted); }
+  .aj-scroll { gap: 6px; }
+  .aj-lbl { font-size: 13px; font-weight: 600; color: var(--muted); margin-top: 6px; }
+  .aj-zone { display: flex; align-items: center; gap: 8px; min-height: 50px; width: 100%; padding: 0 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--bg); color: var(--muted); font: inherit; font-size: 16px; text-align: left; cursor: pointer; }
+  .aj-zone.choisi { color: var(--ink); }
+  .aj-zone[aria-expanded="true"] { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .aj-zone .aj-zt { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .aj-zone .aj-chev { transition: transform .2s; }
+  .aj-zone[aria-expanded="true"] .aj-chev { transform: rotate(180deg); }
+  .aj-drop { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--card); }
+  .aj-q { display: flex; align-items: center; gap: 8px; padding: 0 12px; background: var(--bg); border-bottom: 1px solid var(--line); color: var(--muted); }
+  .bs .aj-q input[type="search"] { border: 0; background: transparent; padding: 0; min-height: 46px; outline: none; }
+  .aj-q:focus-within { box-shadow: inset 0 -2px 0 var(--accent); }
+  .aj-res { max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; }
+  .aj-titre { padding: 10px 14px 4px; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .aj-opt { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 48px; padding: 0 14px; border: 0; border-bottom: 1px solid var(--line); background: transparent; color: var(--ink); font: inherit; font-size: 15px; text-align: left; cursor: pointer; }
+  .aj-opt:last-child { border-bottom: 0; }
+  .aj-opt small { color: var(--muted); font-size: 13px; flex: none; }
+  .aj-opt[aria-selected="true"] { background: var(--accent-soft); color: var(--accent); font-weight: 700; }
+  .aj-vide { padding: 14px; font-size: 14px; color: var(--muted); }
+  .aj-err { margin: 4px 0 0; font-size: 14px; color: var(--accent); font-weight: 600; }
+  .aj-note { margin: 0; font-size: 13px; color: var(--muted); text-align: center; }
+  .bs-go:disabled { opacity: .6; cursor: default; }
 </style>
 </head>
 <body>
@@ -624,6 +651,39 @@
   <a class="dock-ig" id="insta" href="https://www.instagram.com/" target="_blank" rel="noopener"><svg class="ig-ico" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>Chope tes adresses</a>
 </nav>
 
+<button type="button" class="add-fab hidden" id="add-open" aria-label="Ajouter un resto à la main" aria-haspopup="dialog" aria-controls="bs-ajout">
+  <svg aria-hidden="true" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+</button>
+
+<div class="bs-bg hidden" id="bs-ajout" role="dialog" aria-modal="true" aria-labelledby="bs-ajout-t">
+  <form class="bs" id="aj-form" novalidate>
+    <div class="bs-head">
+      <div><h2 id="bs-ajout-t">Ajouter un resto</h2><p class="aj-sub">Sans reel : juste le nom et la zone.</p></div>
+      <button type="button" class="draw-close" id="aj-x" aria-label="Fermer">✕</button>
+    </div>
+    <div class="bs-scroll aj-scroll">
+      <label class="aj-lbl" for="aj-nom">Nom du resto</label>
+      <input type="text" id="aj-nom" maxlength="80" placeholder="Ex. Chez Lulu" autocomplete="off" autocapitalize="words" enterkeyhint="next">
+      <span class="aj-lbl" id="aj-zone-lbl">Zone ou ville</span>
+      <button type="button" class="aj-zone" id="aj-zone" aria-expanded="false" aria-controls="aj-drop" aria-labelledby="aj-zone-lbl aj-zt">
+        <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg>
+        <span class="aj-zt" id="aj-zt">Choisir une zone</span>
+        <svg class="aj-chev" aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+      <div class="aj-drop hidden" id="aj-drop">
+        <label class="aj-q">
+          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <input type="search" id="aj-q" placeholder="Ville, arrondissement ou code postal…" aria-label="Chercher une ville, un arrondissement ou un code postal" autocomplete="off">
+        </label>
+        <div class="aj-res" id="aj-res" role="listbox" aria-label="Villes"></div>
+      </div>
+      <p class="aj-err hidden" id="aj-err" role="alert"></p>
+    </div>
+    <button type="submit" class="bs-go" id="aj-go">Ajouter à ma liste</button>
+    <p class="aj-note">Une petite faute dans le nom ? Pas grave, N!che retrouve le resto.</p>
+  </form>
+</div>
+
 <div class="draw-bg hidden" id="draw" role="dialog" aria-modal="true" aria-labelledby="draw-title">
   <div class="draw">
     <div class="draw-head">
@@ -695,6 +755,7 @@
     <button class="menu-item" id="menu-aide" type="button" aria-expanded="false" aria-controls="menu-aide-box">❓ Aide</button>
     <div class="menu-aide hidden" id="menu-aide-box">
       <p><b>Ajouter un resto :</b> ouvre un reel sur Instagram, appuie sur Partager (l'avion en papier) puis choisis N!che. Il arrive dans ta liste en moins d'une minute.</p>
+      <p><b>Pas de reel ?</b> Touche le bouton <b>＋</b> en bas à droite, tape le nom du resto et sa ville.</p>
       <button class="linkbtn" id="open-raccourci" type="button">Raccourci N!che</button>
     </div>
     <button class="linkbtn menu-out" id="logout" type="button">Se déconnecter</button>
@@ -791,6 +852,7 @@
 
   const RACCOURCI_ICLOUD = "https://www.icloud.com/shortcuts/3188ae8607044ace852b376ec97f552b";
   const MAKE_WEBHOOK = "https://hook.eu1.make.com/724w9nyrng5m99rv8ut45uxarrpgv3pb";
+  const MAKE_WEBHOOK_AJOUT = "https://hook.eu1.make.com/9glkbqk49sxrxz8n5b8dwovnq6oqyz7p"; // TICK-80 : scénario « N!che Ajout manuel »
 
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
   const $ = (id) => document.getElementById(id);
@@ -852,7 +914,9 @@
   function afficherAttente(a) {
     if (!a.length) { $("share-banner").classList.add("hidden"); return; }
     const n = a.length;
-    banniere(n + (n > 1 ? " restos en attente…" : " resto en attente…"), "Lecture du reel et vérification sur Google Maps (20 à 40 s). Tu peux retourner sur Instagram, ça continue sans toi.", true);
+    const manuels = a.every((x) => x.manuel);
+    banniere(n + (n > 1 ? " restos en attente…" : " resto en attente…"),
+      manuels ? "Recherche sur Google Maps (10 à 20 s)." : "Lecture du reel et vérification sur Google Maps (20 à 40 s). Tu peux retourner sur Instagram, ça continue sans toi.", true);
   }
   let suiviActif = false;
   async function suivreAttente() {
@@ -877,9 +941,13 @@
         const el = $("r" + arrives[arrives.length - 1].id);
         if (el) el.classList.add("pick");
       }
-      const avantExpir = a.length;
+      const expires = a.filter((x) => Date.now() - x.t >= DELAI_MAX);
       a = a.filter((x) => Date.now() - x.t < DELAI_MAX);
-      if (a.length < avantExpir) toast("Un reel n'a rien donné : resto déjà dans ta liste, ou pas assez d'infos dans le reel.");
+      if (expires.length) {
+        const m = expires.find((x) => x.manuel);
+        toast(m ? "« " + m.nom + " » n'a rien donné : déjà dans ta liste, ou introuvable sur Google Maps."
+                : "Un reel n'a rien donné : resto déjà dans ta liste, ou pas assez d'infos dans le reel.");
+      }
       ecrireAttente(a);
       afficherAttente(a);
       if (a.length) setTimeout(tick, 5000); else suiviActif = false;
@@ -896,6 +964,120 @@
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => t.classList.remove("show"), 5000);
   }
+
+  // ===== TICK-80 : ajout manuel d'un resto (nom + ville, sans reel) =====
+  // La ville vient de la table « communes » (TICK-81) ; l'envoi part vers le scénario Make « N!che Ajout manuel ».
+  const am = { commune: null, req: 0, timer: null, suggestions: null, liste: [] };
+  const nomVille = (c) => String(c.nom || "").replace(/ Arrondissement$/i, "");
+  const sousVille = (c) => c.code_postal || (c.codes_postaux && c.codes_postaux[0]) || c.departement || "";
+  function erreurAjoutManuel(texte, focusId) {
+    $("aj-err").textContent = texte;
+    $("aj-err").classList.toggle("hidden", !texte);
+    if (focusId) $(focusId).focus();
+  }
+  function ouvrirAjoutManuel() {
+    am.commune = null;
+    $("aj-nom").value = "";
+    $("aj-q").value = "";
+    $("aj-zt").textContent = "Choisir une zone";
+    $("aj-zone").classList.remove("choisi");
+    ouvrirVilles(false);
+    erreurAjoutManuel("");
+    montrer("bs-ajout", true);
+    document.body.style.overflow = "hidden";
+    setTimeout(() => $("aj-nom").focus(), 50);
+  }
+  function fermerAjoutManuel() {
+    montrer("bs-ajout", false);
+    document.body.style.overflow = "";
+    $("add-open").focus();
+  }
+  function ouvrirVilles(oui) {
+    $("aj-drop").classList.toggle("hidden", !oui);
+    $("aj-zone").setAttribute("aria-expanded", oui ? "true" : "false");
+    if (oui) { chercherVilles(); setTimeout(() => $("aj-q").focus(), 30); }
+  }
+  async function suggestionsAjoutManuel() {
+    if (am.suggestions) return am.suggestions;
+    const freq = {};
+    restos.forEach((r) => { if (r.commune_insee) freq[r.commune_insee] = (freq[r.commune_insee] || 0) + 1; });
+    const codes = Object.keys(freq).sort((a, b) => freq[b] - freq[a]).slice(0, 6);
+    if (!codes.length) return (am.suggestions = []);
+    const { data, error } = await sb.from("communes").select("code_insee, nom, departement, codes_postaux, lat, lng").in("code_insee", codes);
+    if (error) return [];
+    return (am.suggestions = (data || []).sort((a, b) => freq[b.code_insee] - freq[a.code_insee]));
+  }
+  function afficherVilles(liste, titre, vide) {
+    am.liste = liste;
+    const choisi = am.commune && am.commune.code_insee;
+    $("aj-res").innerHTML = (titre && liste.length ? '<div class="aj-titre">' + esc(titre) + "</div>" : "") +
+      (liste.length
+        ? liste.map((c, i) => '<button type="button" class="aj-opt" role="option" data-i="' + i + '" aria-selected="' + (c.code_insee === choisi) + '">' +
+            "<span>" + esc(nomVille(c)) + "</span><small>" + esc(sousVille(c)) + "</small></button>").join("")
+        : '<div class="aj-vide">' + esc(vide) + "</div>");
+  }
+  function chercherVilles() {
+    clearTimeout(am.timer);
+    const q = $("aj-q").value.trim().replace(/\b0+(?=\d)/g, ""); // « Paris 09 » = « Paris 9 »
+    const num = ++am.req;
+    if (q.length < 2) {
+      suggestionsAjoutManuel().then((s) => { if (num === am.req) afficherVilles(s, "Tes zones", "Tape au moins 2 lettres, ou un code postal."); });
+      return;
+    }
+    am.timer = setTimeout(async () => {
+      const { data, error } = await sb.rpc("chercher_communes", { q });
+      if (num !== am.req) return; // une recherche plus récente est partie
+      if (error) return afficherVilles([], "", "Recherche impossible. Vérifie ta connexion.");
+      afficherVilles(data || [], "", "Aucune ville ne correspond.");
+    }, 200);
+  }
+  function choisirVille(c) {
+    am.commune = c;
+    $("aj-zt").textContent = nomVille(c) + (c.departement ? " (" + c.departement + ")" : "");
+    $("aj-zone").classList.add("choisi");
+    ouvrirVilles(false);
+    erreurAjoutManuel("");
+  }
+  async function envoyerAjoutManuel(e) {
+    e.preventDefault();
+    const nom = $("aj-nom").value.trim();
+    if (nom.length < 2) return erreurAjoutManuel("Écris le nom du resto.", "aj-nom");
+    if (!am.commune) { erreurAjoutManuel("Choisis une zone ou une ville."); return ouvrirVilles(true); }
+    if (!currentUser) return;
+    const c = am.commune;
+    $("aj-go").disabled = true;
+    $("aj-go").textContent = "Envoi…";
+    try {
+      const { data: prof, error } = await sb.from("profils").select("token_raccourci").eq("id", currentUser.id).maybeSingle();
+      if (error || !prof || !prof.token_raccourci) throw new Error("profil introuvable");
+      await fetch(MAKE_WEBHOOK_AJOUT, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ nom, ville: c.nom, code_insee: c.code_insee, lat: String(c.lat), lng: String(c.lng), token: prof.token_raccourci }).toString()
+      });
+      const att = lireAttente();
+      att.push({ manuel: true, nom, t: Date.now(), avant: restos.map((r) => r.id) });
+      ecrireAttente(att);
+      fermerAjoutManuel();
+      suivreAttente();
+    } catch (err) {
+      erreurAjoutManuel("L'envoi a échoué, réessaie. (" + (err.message || err) + ")");
+    } finally {
+      $("aj-go").disabled = false;
+      $("aj-go").textContent = "Ajouter à ma liste";
+    }
+  }
+  $("add-open").onclick = ouvrirAjoutManuel;
+  $("aj-x").onclick = fermerAjoutManuel;
+  $("bs-ajout").addEventListener("click", (e) => { if (e.target === $("bs-ajout")) fermerAjoutManuel(); });
+  $("aj-zone").onclick = () => ouvrirVilles($("aj-drop").classList.contains("hidden"));
+  $("aj-q").addEventListener("input", chercherVilles);
+  $("aj-q").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); if (am.liste[0]) choisirVille(am.liste[0]); } });
+  $("aj-res").addEventListener("click", (e) => { const b = e.target.closest(".aj-opt"); if (b) choisirVille(am.liste[+b.dataset.i]); });
+  $("aj-nom").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); if (!am.commune) ouvrirVilles(true); else $("aj-go").focus(); } });
+  $("aj-form").addEventListener("submit", envoyerAjoutManuel);
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("bs-ajout").classList.contains("hidden")) fermerAjoutManuel(); });
 
   // ===== Raccourci N!che (proposé à l'inscription, disponible à tout moment) =====
   const estIphone = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
@@ -1086,6 +1268,7 @@
     $("auth").classList.remove("hidden");
     $("app").classList.add("hidden");
     $("dock").classList.add("hidden");
+    $("add-open").classList.add("hidden");
     $("userbar").classList.add("hidden");
     $("sub").textContent = "On mange où ce soir ? Connecte-toi pour retrouver tes adresses.";
     setTimeout(() => {
@@ -1100,6 +1283,7 @@
     $("auth").classList.add("hidden");
     $("app").classList.remove("hidden");
     $("dock").classList.remove("hidden");
+    $("add-open").classList.remove("hidden");
     $("userbar").classList.remove("hidden");
     $("who").textContent = user.email;
     $("menu-av").textContent = (user.email || "?").charAt(0).toUpperCase();
@@ -1137,6 +1321,7 @@
       $("menu-count").textContent = restos.length + (restos.length > 1 ? " restos" : " resto");
       buildFilters();
       render();
+      am.suggestions = null;
     } catch (e) {
       $("sub").textContent = "";
       $("list").innerHTML = '<div class="msg">Impossible de charger tes restos.<br><small>' + esc(e.message || e) + "</small></div>";
