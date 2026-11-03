@@ -351,6 +351,14 @@
   .auth .hint { color: var(--muted); font-size: 13px; margin-top: 12px; }
   .auth label.remember { display: flex; align-items: center; gap: 8px; margin: 12px 0 0; font-size: 14px; cursor: pointer; }
   .auth label.remember input { width: 18px; height: 18px; padding: 0; accent-color: #ff6a33; }
+  .auth .forgot { display: block; margin: 10px auto 0; background: none; border: 0; padding: 4px 6px; color: inherit; opacity: .8; font: inherit; font-size: 14px; text-decoration: underline; cursor: pointer; }
+  .auth .forgot.ok { opacity: 1; text-decoration: none; }
+  .mdp-form { text-align: left; }
+  .mdp-form label { display: block; font-size: 13px; color: var(--muted); margin: 10px 0 4px; }
+  .mdp-form input { width: 100%; box-sizing: border-box; padding: 11px 48px 11px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font: inherit; font-size: 16px; }
+  .mdp-form .sheet-btn { width: 100%; border: 0; cursor: pointer; font: inherit; font-weight: 600; font-size: 17px; }
+  .mdp-form .sheet-btn:disabled { opacity: .6; cursor: default; }
+  .mdp-err { color: var(--accent); font-size: 14px; font-weight: 600; min-height: 1em; margin: 8px 0 0; text-align: center; }
   .pass-wrap { position: relative; }
   .pass-wrap input { padding-right: 48px; }
   .eye { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); background: none; border: 0; font-size: 18px; padding: 6px 8px; cursor: pointer; opacity: .75; }
@@ -599,11 +607,30 @@
     </div>
     <label class="remember" id="remember-row"><input type="checkbox" id="f-remember" checked> Se souvenir de moi</label>
     <button class="submit" id="f-submit" type="submit">Se connecter</button>
+    <button class="forgot" id="f-forgot" type="button">Mot de passe oublié ?</button>
     <div class="err" id="f-err"></div>
     <div class="hint" id="f-hint">Pas encore de compte ? Il te faut un code d'invitation.</div>
   </form>
 </section>
 <div class="portal-foot">Sur invitation uniquement · bêta</div>
+
+<div class="sheet-bg hidden" id="sheet-mdp" style="z-index:45" role="dialog" aria-modal="true" aria-labelledby="mdp-title">
+  <div class="sheet">
+    <h2 id="mdp-title">Nouveau mot de passe 🔑</h2>
+    <p>Choisis ton nouveau mot de passe. Tu l'utiliseras à ta prochaine connexion.</p>
+    <form class="mdp-form" id="mdp-form" novalidate>
+      <label for="mdp-pass">Nouveau mot de passe</label>
+      <div class="pass-wrap">
+        <input id="mdp-pass" name="new-password" type="password" autocomplete="new-password" minlength="6" required>
+        <button class="eye" id="mdp-eye" type="button" aria-label="Afficher le mot de passe">👁</button>
+      </div>
+      <p class="sheet-small">6 caractères minimum.</p>
+      <button class="sheet-btn" id="mdp-go" type="submit">Enregistrer</button>
+      <div class="mdp-err" id="mdp-err" role="alert"></div>
+      <button class="forgot" id="mdp-plus-tard" type="button" style="display:block;margin:6px auto 0;background:none;border:0;color:var(--muted);text-decoration:underline;font:inherit;font-size:14px;cursor:pointer">Plus tard</button>
+    </form>
+  </div>
+</div>
 
 <div class="sheet-bg hidden" id="sheet-raccourci" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
   <div class="sheet">
@@ -853,6 +880,17 @@
   const RACCOURCI_ICLOUD = "https://www.icloud.com/shortcuts/3188ae8607044ace852b376ec97f552b";
   const MAKE_WEBHOOK = "https://hook.eu1.make.com/724w9nyrng5m99rv8ut45uxarrpgv3pb";
   const MAKE_WEBHOOK_AJOUT = "https://hook.eu1.make.com/9glkbqk49sxrxz8n5b8dwovnq6oqyz7p"; // TICK-80 : scénario « N!che Ajout manuel »
+
+  // TICK-69 : lien « mot de passe oublié » reçu par email (…/#access_token=…&type=recovery, ou #error=… si expiré)
+  const RETOUR_MDP = (function () {
+    const h = new URLSearchParams(location.hash.replace(/^#/, ""));
+    if (h.get("type") === "recovery") {
+      try { sessionStorage.setItem("niche_session_ok", "1"); } catch (e) {}
+      return "ok";
+    }
+    if (h.get("error_code") || h.get("error")) return "expire";
+    return "";
+  })();
 
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
   const $ = (id) => document.getElementById(id);
@@ -1129,7 +1167,7 @@
   function proposerRaccourciSiNouveau(user) {
     let vu = false;
     try { vu = localStorage.getItem("niche_raccourci_" + user.id) === "1"; } catch (e) {}
-    if (!vu && !lienEnAttente()) {
+    if (!vu && !lienEnAttente() && !mdpOuvert && !mdpAttendu) {
       try { localStorage.setItem("niche_raccourci_" + user.id, "1"); } catch (e) {}
       ouvrirRaccourci();
     }
@@ -1153,6 +1191,7 @@
     $("tab-signup").classList.toggle("on", m === "signup");
     $("signup-fields").classList.toggle("hidden", m !== "signup");
     $("f-submit").textContent = m === "login" ? "Se connecter" : "Créer mon compte";
+    $("f-forgot").classList.toggle("hidden", m !== "login");
     $("f-pass").name = m === "login" ? "password" : "new-password";
     $("f-pass").autocomplete = m === "login" ? "current-password" : "new-password";
     $("f-hint").textContent = m === "login" ? "Pas encore de compte ? Il te faut un lien ou un code d'invitation." : (inviteCode ? "Plus que 3 champs et c'est parti 🍽️" : "Le code d'invitation ne marche qu'une seule fois.");
@@ -1199,6 +1238,9 @@
     if (/password should be at least/i.test(m)) return "Le mot de passe doit faire au moins 6 caractères.";
     if (/invalid.*email|email.*invalid/i.test(m)) return "Cet email n'a pas l'air valide.";
     if (/signups not allowed/i.test(m)) return "Les inscriptions sont fermées pour le moment.";
+    if (/only request this after|rate limit|too many/i.test(m)) return "Patiente une minute avant de redemander un lien.";
+    if (/should be different/i.test(m)) return "Choisis un mot de passe différent de l'ancien.";
+    if (/session.*missing|auth session/i.test(m)) return "Le lien a expiré. Redemande un lien depuis « Mot de passe oublié ? ».";
     return "Oups : " + m;
   }
 
@@ -1251,6 +1293,74 @@
 
   $("logout").onclick = async () => { await sb.auth.signOut(); };
 
+  // ===== TICK-69 : mot de passe oublié =====
+  $("f-forgot").onclick = async () => {
+    const email = $("f-email").value.trim();
+    const err = $("f-err");
+    err.textContent = "";
+    if (!email) { err.textContent = "Tape ton email au-dessus, puis touche « Mot de passe oublié ? »."; $("f-email").focus(); return; }
+    const btn = $("f-forgot");
+    btn.disabled = true;
+    try {
+      const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname });
+      if (error) throw error;
+      err.textContent = "C'est parti 📩 Si un compte existe avec cet email, tu vas recevoir un lien. Pense à regarder tes spams.";
+    } catch (e) {
+      err.textContent = frenchError(e);
+    } finally {
+      btn.disabled = false;
+    }
+  };
+
+  let mdpOuvert = false;
+  let mdpAttendu = RETOUR_MDP === "ok";
+  function ouvrirMdp() {
+    if (mdpOuvert) return;
+    mdpOuvert = true;
+    mdpAttendu = false;
+    $("mdp-pass").value = "";
+    $("mdp-err").textContent = "";
+    $("sheet-mdp").classList.remove("hidden");
+    document.body.style.overflow = "hidden";
+    setTimeout(() => $("mdp-pass").focus(), 60);
+  }
+  function fermerMdp() {
+    mdpOuvert = false;
+    $("sheet-mdp").classList.add("hidden");
+    document.body.style.overflow = "";
+  }
+  $("mdp-plus-tard").onclick = fermerMdp;
+  $("mdp-eye").onclick = () => {
+    const p = $("mdp-pass");
+    const voir = p.type === "password";
+    p.type = voir ? "text" : "password";
+    $("mdp-eye").setAttribute("aria-label", voir ? "Masquer le mot de passe" : "Afficher le mot de passe");
+    $("mdp-eye").style.opacity = voir ? "1" : ".75";
+  };
+  $("mdp-form").onsubmit = async (ev) => {
+    ev.preventDefault();
+    const password = $("mdp-pass").value;
+    const err = $("mdp-err");
+    err.textContent = "";
+    if (password.length < 6) { err.textContent = "Le mot de passe doit faire au moins 6 caractères."; return; }
+    const btn = $("mdp-go");
+    btn.disabled = true;
+    try {
+      const { error } = await sb.auth.updateUser({ password });
+      if (error) throw error;
+      fermerMdp();
+      toast("Mot de passe changé ✅");
+    } catch (e) {
+      err.textContent = frenchError(e);
+    } finally {
+      btn.disabled = false;
+    }
+  };
+  if (RETOUR_MDP === "expire") {
+    history.replaceState(null, "", location.pathname + location.search);
+    setTimeout(() => { $("f-err").textContent = "Ce lien a expiré ou a déjà servi. Redemande un lien avec « Mot de passe oublié ? »."; }, 300);
+  }
+
   // Pré-remplir l'email mémorisé ; si « Se souvenir de moi » était décochée, déconnecter à la réouverture
   try {
     const memo = localStorage.getItem("niche_email");
@@ -1301,6 +1411,7 @@
   sb.auth.onAuthStateChange((_event, session) => {
     // setTimeout : évite le blocage de Supabase quand on l'appelle pendant ce rappel (rechargement de page)
     setTimeout(() => {
+      if (session && session.user && (_event === "PASSWORD_RECOVERY" || mdpAttendu)) ouvrirMdp();
       if (session && session.user) showApp(session.user);
       else showAuth();
     }, 0);
