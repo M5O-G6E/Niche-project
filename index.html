@@ -895,6 +895,73 @@
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
   const $ = (id) => document.getElementById(id);
 
+  // ===== TICK-83 : le retour du téléphone ferme la fenêtre ouverte au lieu de quitter N!che =====
+  // Chaque fenêtre ouverte ajoute une étape dans l'historique ({…, ov: id}). Le retour la retire et ferme la fenêtre.
+  // Fermée par sa croix, la fenêtre retire elle-même son étape (history.back), sans déranger les pages Fiche et Listes.
+  const NAV = (function () {
+    const FERMER = {
+      "menu": () => fermerMenu(), "flt": () => fermerFiltres(), "draw": () => fermerTirage(),
+      "bs-ajout": () => fermerAjoutManuel(), "bs-new": () => montrer("bs-new", false), "bs-add": () => montrer("bs-add", false),
+      "bs-couv": () => fermerCouv(), "bs-pick": () => fermerPick(),
+      "sheet-raccourci": () => fermerRaccourci(), "sheet-mdp": () => fermerMdp(),
+    };
+    const pile = [];                 // fenêtres ouvertes, de la plus ancienne à la plus récente
+    const fermeesParRetour = new Set();
+    let retoursEnCours = 0;          // history.back() lancés par nous, pas par le téléphone
+    const enAttente = [];            // ajouts d'historique à faire une fois le retour terminé
+    const pushOrigine = history.pushState.bind(history);
+    const sansOv = (st) => { const o = Object.assign({}, st || {}); delete o.ov; return Object.keys(o).length ? o : null; };
+    history.pushState = function (st, t, u) {
+      if (retoursEnCours > 0) enAttente.push(() => pushOrigine(st, t, u));
+      else pushOrigine(st, t, u);
+    };
+    function ajouterEtape(id) {
+      const faire = () => pushOrigine(Object.assign({}, sansOv(history.state) || {}, { ov: id }), "");
+      if (retoursEnCours > 0) enAttente.push(faire); else faire();
+    }
+    window.addEventListener("popstate", (e) => {
+      if (retoursEnCours > 0) {
+        // retour lancé par une croix : l'écran est déjà à jour, les autres écouteurs n'ont rien à faire
+        retoursEnCours--;
+        e.stopImmediatePropagation();
+        if (!retoursEnCours) while (enAttente.length) enAttente.shift()();
+        return;
+      }
+      const garder = e.state && e.state.ov;
+      const aFermer = pile.filter((id) => id !== garder);
+      if (!aFermer.length) return; // pas de fenêtre : on laisse les pages Fiche / Listes gérer le retour
+      e.stopImmediatePropagation();
+      aFermer.reverse().forEach((id) => {
+        pile.splice(pile.indexOf(id), 1);
+        fermeesParRetour.add(id);
+        try { FERMER[id](); } catch (err) { montrer(id, false); document.body.style.overflow = ""; }
+      });
+    });
+    function surChangements(ids) {
+      const ouverts = ids.filter((id) => !$(id).classList.contains("hidden"));
+      let aRetirer = 0;
+      ids.filter((id) => !ouverts.includes(id)).forEach((id) => {
+        const i = pile.indexOf(id);
+        if (i === -1) { fermeesParRetour.delete(id); return; }
+        pile.splice(i, 1);
+        if (!fermeesParRetour.delete(id)) aRetirer++; // fermée par sa croix : son étape est à retirer
+      });
+      // les fermetures d'abord : une fenêtre ouverte dans le même geste attendra la fin du retour
+      if (aRetirer) retoursEnCours++;
+      ouverts.forEach((id) => { if (!pile.includes(id)) { pile.push(id); ajouterEtape(id); } });
+      if (aRetirer) history.go(-aRetirer);
+    }
+    function demarrer() {
+      const obs = new MutationObserver((muts) => {
+        const vus = [];
+        muts.forEach((m) => { if (!vus.includes(m.target.id)) vus.push(m.target.id); });
+        surChangements(vus);
+      });
+      Object.keys(FERMER).forEach((id) => { const el = $(id); if (el) obs.observe(el, { attributes: true, attributeFilter: ["class"] }); });
+    }
+    return { demarrer, pile };
+  })();
+
   // ===== Lien partagé (raccourci iPhone ?add=…, partage Android ?text=…) =====
   function extraireLien(txt) {
     const m = String(txt || "").match(/https?:\/\/(www\.)?instagram\.com\/[^\s"'<>]+/i);
@@ -2466,6 +2533,7 @@
   $("pg-public").addEventListener("click", (e) => {
     if (e.target.closest("#pub-x") || e.target.closest("#pub-go")) { montrer("pg-public", false); document.body.style.overflow = ""; }
   });
+  NAV.demarrer();
 </script>
 </body>
 </html>
