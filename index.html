@@ -595,6 +595,39 @@
   .rt-type[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); font-weight: 700; }
   .bs textarea#rt-com { width: 100%; min-height: 96px; box-sizing: border-box; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--bg); color: var(--ink); font: inherit; font-size: 16px; resize: vertical; }
   .rt-err { margin: 4px 0 0; font-size: 14px; color: var(--accent); font-weight: 600; }
+  /* TICK-98 : barre d'onglets en bas (remplace le menu ☰, le bouton Instagram et le ＋ noir) */
+  .userbar, #insta, .add-fab { display: none !important; }
+  .dock { left: auto; right: max(16px, calc((100vw - 980px) / 2 + 16px)); bottom: calc(76px + env(safe-area-inset-bottom)); padding: 0; background: none; border: 0; z-index: 30; }
+  .dock .fab { flex: none; padding: 8px 20px; min-height: 50px; }
+  .tabbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 34; display: flex; justify-content: space-around; align-items: center; background: var(--bg); border-top: 1px solid var(--line); padding: 6px 4px calc(6px + env(safe-area-inset-bottom)); }
+  .tabbar > * { max-width: 120px; }
+  .tab { flex: 1; min-height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border: 0; background: none; color: var(--muted); font: inherit; font-size: 11px; font-weight: 600; cursor: pointer; }
+  .tab svg { width: 24px; height: 24px; }
+  .tab[aria-current="page"] { color: var(--accent); }
+  .tab-plus { flex: none; width: 56px; height: 56px; margin: 0 6px; border-radius: 50%; border: 0; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 18px rgba(217,72,28,.35); cursor: pointer; }
+  .vue { display: flex; gap: 4px; padding: 4px; margin: 2px 0 6px; background: var(--chip); border-radius: 999px; width: max-content; }
+  .vue button { min-height: 36px; padding: 0 16px; border: 0; border-radius: 999px; background: none; color: var(--muted); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .vue button[aria-pressed="true"] { background: var(--card); color: var(--ink); box-shadow: 0 1px 4px rgba(0,0,0,.12); }
+  .vue .soon { margin-left: 6px; font-size: 9px; padding: 2px 6px; }
+  .plus-opt { display: flex; align-items: center; gap: 14px; width: 100%; min-height: 64px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 18px; background: var(--bg); color: var(--ink); font: inherit; text-align: left; text-decoration: none; cursor: pointer; }
+  .plus-opt b { display: block; font-size: 16px; }
+  .plus-opt small { color: var(--muted); font-size: 13px; }
+  .plus-ico { flex: none; width: 44px; height: 44px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 20px; }
+  .pf-head { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; padding-top: 6px; }
+  .pf-av { width: 88px; height: 88px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); font: 800 40px/1 "Baloo 2", system-ui, sans-serif; display: flex; align-items: center; justify-content: center; }
+  .pf-pseudo { font-family: Fraunces, Georgia, serif; font-weight: 800; font-size: 24px; overflow-wrap: anywhere; }
+  .pf-stats { display: flex; justify-content: center; gap: 28px; margin: 6px 0; }
+  .pf-stats div { display: flex; flex-direction: column; align-items: center; font-size: 13px; color: var(--muted); }
+  .pf-stats b { font-size: 20px; color: var(--ink); }
+  .encart { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 14px 16px; color: var(--muted); font-size: 14px; }
+  .encart b { color: var(--ink); }
+  .ex-vide { text-align: center; color: var(--muted); padding: 30px 10px; }
+  .ex-vide .big { font-size: 40px; }
+  .rg-item { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 52px; padding: 0 6px; border: 0; border-bottom: 1px solid var(--line); background: none; color: var(--ink); font: inherit; font-size: 16px; font-weight: 600; text-align: left; cursor: pointer; }
+  .rg-aide { font-size: 14px; color: var(--muted); padding: 4px 6px 10px; }
+  .rg-aide p { margin: 4px 0 8px; }
+  .rg-out { color: var(--accent); border-bottom: 0; }
+  #ls-back { display: none; }
 </style>
 </head>
 <body>
@@ -686,6 +719,10 @@
     <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h11M18 6h3M3 12h3M10 12h11M3 18h7M14 18h7"/><circle cx="16" cy="6" r="2"/><circle cx="8" cy="12" r="2"/><circle cx="12" cy="18" r="2"/></svg>
     Filtres <span class="flt-n hidden" id="flt-n"></span>
   </button>
+</div>
+<div class="vue" role="group" aria-label="Affichage">
+  <button type="button" aria-pressed="true">Liste</button>
+  <button type="button" aria-pressed="false" id="vue-carte">Carte<span class="soon">bientôt</span></button>
 </div>
 
 <div class="bar">
@@ -924,6 +961,55 @@
   </div>
 </div>
 
+<!-- TICK-98 : pages Explorer et Profil, feuille ＋, Réglages, barre d'onglets -->
+<div class="pg hidden" id="pg-explorer" aria-labelledby="ex-titre">
+  <div class="pg-in">
+    <div class="pg-top"><h1 id="ex-titre">Explorer</h1></div>
+    <div class="ex-vide"><div class="big" aria-hidden="true">🔭</div><p><b>Bientôt ici</b><br>Retrouve tes potes par leur pseudo, suis-les et découvre leurs listes publiques.</p></div>
+  </div>
+</div>
+<div class="pg hidden" id="pg-profil" aria-labelledby="pf-pseudo">
+  <div class="pg-in">
+    <div class="pg-top"><span style="flex:1"></span><button type="button" class="rond" id="pf-reglages" aria-label="Réglages" aria-haspopup="dialog" aria-controls="bs-reglages">⚙</button></div>
+    <div class="pf-head">
+      <div class="pf-av" id="pf-av" aria-hidden="true">?</div>
+      <div class="pf-pseudo" id="pf-pseudo"></div>
+    </div>
+    <div class="pf-stats" id="pf-stats"></div>
+    <div class="encart"><b>Bientôt : ton profil public.</b> Tes potes pourront te suivre et voir tes listes publiques. Pour l'instant, ton répertoire, tes to do et tes likes restent privés ; seules les listes que tu rends publiques se partagent.</div>
+  </div>
+</div>
+<div class="bs-bg hidden" id="bs-plus" role="dialog" aria-modal="true" aria-labelledby="bs-plus-t">
+  <div class="bs">
+    <div class="bs-head"><h2 id="bs-plus-t">Ajouter</h2><button type="button" class="draw-close" id="plus-x" aria-label="Fermer">✕</button></div>
+    <a class="plus-opt" id="plus-reel" href="https://www.instagram.com/" target="_blank" rel="noopener"><span class="plus-ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg></span><span><b>Chope un reel</b><small>Sur Instagram : Partager, puis N!che</small></span></a>
+    <button type="button" class="plus-opt" id="plus-main"><span class="plus-ico" aria-hidden="true">✍️</span><span><b>À la main</b><small>Juste le nom et la ville, sans reel</small></span></button>
+    <button type="button" class="plus-opt" id="plus-liste"><span class="plus-ico" aria-hidden="true">🛎️</span><span><b>Une nouvelle liste</b><small>Façon playlist, à garder ou à partager</small></span></button>
+  </div>
+</div>
+<div class="bs-bg hidden" id="bs-reglages" role="dialog" aria-modal="true" aria-labelledby="bs-reglages-t">
+  <div class="bs">
+    <div class="bs-head"><h2 id="bs-reglages-t">Réglages</h2><button type="button" class="draw-close" id="rg-x" aria-label="Fermer">✕</button></div>
+    <div class="bs-scroll">
+      <button type="button" class="rg-item" id="rg-raccourci">📲 <span id="rg-raccourci-t">Raccourci N!che</span></button>
+      <button type="button" class="rg-item" id="rg-retours">⭐ Donner mon avis</button>
+      <button type="button" class="rg-item" id="rg-aide" aria-expanded="false" aria-controls="rg-aide-box">❓ Aide</button>
+      <div class="rg-aide hidden" id="rg-aide-box">
+        <p><b>Ajouter un resto :</b> ouvre un reel sur Instagram, appuie sur Partager (l'avion en papier) puis choisis N!che. Il arrive dans ta liste en moins d'une minute.</p>
+        <p><b>Pas de reel ?</b> Touche le <b>＋</b> au centre de la barre du bas, puis « À la main ».</p>
+      </div>
+      <button type="button" class="rg-item rg-out" id="rg-logout">Se déconnecter</button>
+    </div>
+  </div>
+</div>
+<nav class="tabbar hidden" id="tabbar" aria-label="Navigation">
+  <button type="button" class="tab" data-onglet="restos" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>Restos</button>
+  <button type="button" class="tab" data-onglet="listes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Listes</button>
+  <button type="button" class="tab-plus" id="tab-plus" aria-label="Ajouter" aria-haspopup="dialog" aria-controls="bs-plus"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+  <button type="button" class="tab" data-onglet="explorer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Explorer</button>
+  <button type="button" class="tab" data-onglet="profil"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Profil</button>
+</nav>
+
 <script>
   const SUPABASE_URL = "https://ckhrhexnldbcbdqxdkmu.supabase.co";
   const SUPABASE_KEY = "sb_publishable_JKbRFpLO_TVeBtjOg7YGeg_CmOOMI-g";
@@ -955,6 +1041,7 @@
       "bs-ajout": () => fermerAjoutManuel(), "bs-new": () => montrer("bs-new", false), "bs-add": () => montrer("bs-add", false),
       "bs-couv": () => fermerCouv(), "bs-pick": () => fermerPick(), "bs-retours": () => fermerRetours(),
       "sheet-raccourci": () => fermerRaccourci(), "sheet-mdp": () => fermerMdp(),
+      "bs-plus": () => montrer("bs-plus", false), "bs-reglages": () => montrer("bs-reglages", false),
     };
     const pile = [];                 // fenêtres ouvertes, de la plus ancienne à la plus récente
     const fermeesParRetour = new Set();
@@ -1511,6 +1598,7 @@
     $("dock").classList.add("hidden");
     $("add-open").classList.add("hidden");
     $("userbar").classList.add("hidden");
+    $("tabbar").classList.add("hidden");
     $("sub").textContent = "On mange où ce soir ? Connecte-toi pour retrouver tes adresses.";
     setTimeout(() => {
       if (!currentUser && lienEnAttente()) banniere("Un resto t'attend 🍽️", "Connecte-toi : on l'ajoute à ta liste juste après.");
@@ -1526,6 +1614,7 @@
     $("dock").classList.remove("hidden");
     $("add-open").classList.remove("hidden");
     $("userbar").classList.remove("hidden");
+    $("tabbar").classList.remove("hidden");
     $("who").textContent = user.email;
     $("menu-av").textContent = (user.email || "?").charAt(0).toUpperCase();
     const { data: prof } = await sb.from("profils").select("pseudo").eq("id", user.id).maybeSingle();
@@ -1534,6 +1623,9 @@
       $("menu-av").textContent = prof.pseudo.charAt(0).toUpperCase();
     }
     await load();
+    // TICK-98 : après un rechargement, on rouvre l'onglet où l'on était
+    const s0 = history.state;
+    if (profondeur(s0) && !(s0 && s0.fiche)) { await chargerListes(); etatPages(s0); }
     if (lireAttente().length) suivreAttente();
     proposerRaccourciSiNouveau(user);
     envoyerPartage(user);
@@ -2308,17 +2400,22 @@
     if (listeOuverte === null) { brouillon = null; montrer("pg-liste", false); montrer("lv-bar", false); montrer("bs-pick", false); montrer("bs-couv", false); }
     else { montrer("pg-liste", true); renderListe(); }
     if (s.listes) renderListes();
-    document.body.style.overflow = s.listes ? "hidden" : "";
+    montrer("pg-explorer", s.onglet === "explorer");
+    montrer("pg-profil", s.onglet === "profil");
+    if (s.onglet === "profil") renderProfil();
+    majOnglets(ongletDe(s));
+    document.body.style.overflow = s.listes || s.onglet ? "hidden" : "";
   }
   async function ouvrirListes() {
     fermerMenu();
     await chargerListes();
-    history.pushState({ listes: 1 }, "", location.pathname);
-    etatPages({ listes: 1 });
+    history.pushState({ listes: 1, d: 1 }, "", location.pathname);
+    etatPages({ listes: 1, d: 1 });
   }
   function ouvrirListe(id) {
-    history.pushState({ listes: 1, liste: id }, "", location.pathname);
-    etatPages({ listes: 1, liste: id });
+    const st = { listes: 1, liste: id, d: profondeur(history.state) + 1 };
+    history.pushState(st, "", location.pathname);
+    etatPages(st);
     $("pg-liste").scrollTop = 0;
   }
   window.addEventListener("popstate", (e) => { if (!(e.state && e.state.fiche)) etatPages(e.state); });
@@ -2715,6 +2812,83 @@
   $("pg-public").addEventListener("click", (e) => {
     if (e.target.closest("#pub-x") || e.target.closest("#pub-go")) { montrer("pg-public", false); document.body.style.overflow = ""; }
   });
+
+  // ===== TICK-98 : barre d'onglets (Restos · Listes · ＋ · Explorer · Profil) =====
+  // Restos = la page de base. Les autres onglets sont des pages par-dessus, une seule étape d'historique :
+  // le retour du téléphone ramène à Restos. « d » = nombre d'étapes depuis Restos.
+  function ongletDe(s) { s = s || {}; return s.onglet || (s.listes ? "listes" : "restos"); }
+  function profondeur(s) {
+    s = s || {};
+    if (typeof s.d === "number") return s.d;
+    return (s.listes || s.onglet ? 1 : 0) + (s.liste != null ? 1 : 0);
+  }
+  function majOnglets(nom) {
+    document.querySelectorAll("#tabbar .tab").forEach((b) => {
+      if (b.dataset.onglet === nom) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
+    });
+  }
+  let ongletApres = null; // onglet à afficher une fois le retour terminé (depuis une liste ouverte)
+  async function allerOnglet(nom) {
+    const s = history.state || {};
+    const p = profondeur(s);
+    if (nom === "restos") {
+      if (p > 0) history.go(-p); else window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+    const page = nom === "listes" ? "pg-listes" : "pg-" + nom;
+    if (ongletDe(s) === nom && s.liste == null) { $(page).scrollTo({ top: 0, behavior: "smooth" }); return; }
+    if (nom === "listes" || nom === "profil") await chargerListes();
+    const cible = nom === "listes" ? { listes: 1, d: 1 } : { onglet: nom, d: 1 };
+    if (p === 0) history.pushState(cible, "", location.pathname);
+    else if (p === 1) history.replaceState(cible, "", location.pathname);
+    else { ongletApres = cible; history.go(-(p - 1)); return; }
+    etatPages(cible);
+    $(page).scrollTop = 0;
+  }
+  window.addEventListener("popstate", () => {
+    if (!ongletApres) return;
+    const c = ongletApres; ongletApres = null;
+    history.replaceState(c, "", location.pathname);
+    etatPages(c);
+  });
+  $("tabbar").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-onglet]");
+    if (b) allerOnglet(b.dataset.onglet);
+  });
+
+  // --- ＋ : un reel, à la main, ou une nouvelle liste
+  $("tab-plus").onclick = () => montrer("bs-plus", true);
+  $("plus-x").onclick = () => montrer("bs-plus", false);
+  $("bs-plus").addEventListener("click", (e) => { if (e.target === $("bs-plus")) montrer("bs-plus", false); });
+  $("plus-reel").addEventListener("click", () => montrer("bs-plus", false));
+  $("plus-main").onclick = () => { montrer("bs-plus", false); ouvrirAjoutManuel(); };
+  $("plus-liste").onclick = () => { montrer("bs-plus", false); ouvrirNouvelle(null); };
+
+  // --- Carte : annoncée, pas encore accessible
+  $("vue-carte").onclick = () => toast("La carte arrive bientôt 🗺️");
+
+  // --- Profil (sans social pour l'instant : TICK-38)
+  function renderProfil() {
+    $("pf-pseudo").textContent = $("who").textContent;
+    $("pf-av").textContent = $("menu-av").textContent;
+    const stat = (n, l) => "<div><b>" + n + "</b>" + l + "</div>";
+    $("pf-stats").innerHTML = stat(restos.length, "restos") + stat(restos.filter(estDone).length, "testés") + stat(listes.length, listes.length > 1 ? "listes" : "liste");
+  }
+  $("pf-reglages").onclick = () => montrer("bs-reglages", true);
+  $("rg-x").onclick = () => montrer("bs-reglages", false);
+  $("bs-reglages").addEventListener("click", (e) => { if (e.target === $("bs-reglages")) montrer("bs-reglages", false); });
+  if (estAndroid) $("rg-raccourci-t").textContent = "Installer N!che";
+  $("rg-raccourci").onclick = () => { montrer("bs-reglages", false); ouvrirRaccourci(); };
+  $("rg-retours").onclick = () => { montrer("bs-reglages", false); ouvrirRetours(); };
+  $("rg-aide").onclick = () => {
+    const ouvert = $("rg-aide-box").classList.toggle("hidden") === false;
+    $("rg-aide").setAttribute("aria-expanded", String(ouvert));
+  };
+  $("rg-logout").onclick = async () => {
+    montrer("bs-reglages", false);
+    if (profondeur(history.state) > 0) history.go(-profondeur(history.state));
+    await sb.auth.signOut();
+  };
   NAV.demarrer();
 </script>
 </body>
