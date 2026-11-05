@@ -605,10 +605,24 @@
   .tab svg { width: 24px; height: 24px; }
   .tab[aria-current="page"] { color: var(--accent); }
   .tab-plus { flex: none; width: 56px; height: 56px; margin: 0 6px; border-radius: 50%; border: 0; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 18px rgba(217,72,28,.35); cursor: pointer; }
-  .vue { display: flex; gap: 4px; padding: 4px; margin: 2px auto 6px; background: var(--chip); border-radius: 999px; width: max-content; }
-  .vue button { min-height: 36px; display: inline-flex; align-items: center; justify-content: center; padding: 0 16px; border: 0; border-radius: 999px; background: none; color: var(--muted); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
-  .vue button[aria-pressed="true"] { background: var(--card); color: var(--ink); box-shadow: 0 1px 4px rgba(0,0,0,.12); }
-  .vue .soon { margin-left: 6px; font-size: 9px; padding: 2px 6px; }
+  /* Maquette S1 : en-tête (compteur + Avis), recherche avec loupe, bascule Liste / Carte pleine largeur */
+  body:not(.portal) header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  body:not(.portal) header h1 { padding-left: 0; font-size: 32px; }
+  .hd-droite { display: none; }
+  body:not(.portal) .hd-droite { display: flex; align-items: center; gap: 10px; flex: none; }
+  #hd-n { font-size: 13px; color: var(--muted); }
+  .hd-avis { height: 40px; padding: 0 12px; display: flex; align-items: center; gap: 6px; border-radius: 999px; background: var(--card); border: 1px solid var(--line); color: var(--ink); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .hd-avis svg { color: var(--accent); }
+  .search-box { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; height: 46px; box-sizing: border-box; padding: 0 12px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; color: var(--muted); }
+  .search-box:focus-within { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .search-box .search { flex: 1; min-width: 0; height: 100%; margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; outline: none; }
+  .search-box .search::placeholder { color: var(--muted); }
+  .vue { display: flex; gap: 4px; padding: 4px; margin: 4px 0 8px; background: var(--chip); border-radius: 14px; }
+  .vue button { flex: 1; height: 38px; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 0 10px; border: 0; border-radius: 10px; background: transparent; color: var(--ink); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .vue button[aria-pressed="true"] { background: var(--card); box-shadow: 0 1px 4px rgba(0,0,0,.12); }
+  #vue-carte { color: var(--muted); }
+  #vue-carte svg, #vue-carte .lbl { opacity: .75; }
+  .vue .bientot { font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 2px 6px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); }
   .plus-opt { display: flex; align-items: center; gap: 14px; width: 100%; min-height: 64px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 18px; background: var(--bg); color: var(--ink); font: inherit; text-align: left; text-decoration: none; cursor: pointer; }
   .plus-opt b { display: block; font-size: 16px; }
   .plus-opt small { color: var(--muted); font-size: 13px; }
@@ -635,6 +649,7 @@
   <h1>N<span class="bang">!</span>che <span class="beta">bêta</span></h1>
   <div class="tagline">Les bonnes adresses<br>ne se perdent plus.</div>
   <div class="sub" id="sub">Chargement…</div>
+  <div class="hd-droite" id="hd-droite"><span id="hd-n"></span><button type="button" class="hd-avis" id="hd-avis" aria-label="Donner mon avis sur N!che" aria-haspopup="dialog" aria-controls="bs-retours"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9Z"/></svg>Avis</button></div>
   <div class="userbar hidden" id="userbar"><button class="menu-btn" id="menu-btn" type="button" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="menu">☰</button></div>
 </header>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -714,18 +729,18 @@
 <div id="app" class="hidden">
 
 <div class="search-row">
-  <input class="search" id="q" type="search" placeholder="Nom, cuisine, quartier…" autocomplete="off" aria-label="Rechercher un resto">
+  <label class="search-box"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input class="search" id="q" type="search" placeholder="Chercher dans mes restos…" autocomplete="off" aria-label="Rechercher dans mes restos"></label>
   <button type="button" class="flt-btn" id="flt-open" aria-haspopup="dialog" aria-controls="flt">
     <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h11M18 6h3M3 12h3M10 12h11M3 18h7M14 18h7"/><circle cx="16" cy="6" r="2"/><circle cx="8" cy="12" r="2"/><circle cx="12" cy="18" r="2"/></svg>
     Filtres <span class="flt-n hidden" id="flt-n"></span>
   </button>
 </div>
 <div class="vue" role="group" aria-label="Affichage">
-  <button type="button" aria-pressed="true">Liste</button>
-  <button type="button" aria-pressed="false" id="vue-carte">Carte<span class="soon">bientôt</span></button>
+  <button type="button" aria-pressed="true"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1" fill="currentColor"/><circle cx="4.5" cy="12" r="1" fill="currentColor"/><circle cx="4.5" cy="18" r="1" fill="currentColor"/></svg>Liste</button>
+  <button type="button" aria-pressed="false" id="vue-carte"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14M15 6v14"/></svg>Carte<span class="bientot">bientôt</span></button>
 </div>
 
-<div class="bar">
+<div class="bar hidden" id="bar">
   <span id="count"></span>
   <button class="linkbtn" id="reset">Tout effacer</button>
 </div>
@@ -1894,6 +1909,8 @@
   function render() {
     const items = filtered();
     $("count").textContent = items.length + " resto" + (items.length > 1 ? "s" : "");
+    $("hd-n").textContent = restos.length + (restos.length > 1 ? " restos" : " resto");
+    $("bar").classList.toggle("hidden", !(state.q || nbFiltres()));
     const list = $("list");
     // TICK-67 : compte neuf = accueil + bouton Instagram mis en avant
     const vide = !restos.length;
@@ -2866,6 +2883,7 @@
 
   // --- Carte : annoncée, pas encore accessible
   $("vue-carte").onclick = () => toast("La carte arrive bientôt 🗺️");
+  $("hd-avis").onclick = ouvrirRetours;
 
   // --- Profil (sans social pour l'instant : TICK-38)
   function renderProfil() {
