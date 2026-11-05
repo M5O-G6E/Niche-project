@@ -184,6 +184,11 @@
   body:not(.portal) header h1 { padding-left: 54px; font-size: 34px; line-height: 44px; min-height: 44px; }
   body:not(.portal) header h1 .beta { vertical-align: middle; margin-left: 2px; }
   body:not(.portal) header .tagline, body:not(.portal) header .sub { display: none; }
+  /* TICK-92 : en-tête figé en haut (comme la barre du bas), une fois connecté */
+  body:not(.portal) { padding-top: 0; }
+  body:not(.portal) header { position: sticky; top: 0; z-index: 19; background: var(--bg); margin: 0 -16px; padding: calc(12px + env(safe-area-inset-top)) 16px 8px; border-bottom: 1px solid transparent; transition: border-color .2s, box-shadow .2s; }
+  body:not(.portal) header.colle { border-bottom-color: var(--line); box-shadow: 0 6px 18px rgba(31,26,23,.06); }
+  body:not(.portal) .menu-btn { top: calc(12px + env(safe-area-inset-top)); left: 12px; }
   .menu-btn { position: absolute; top: 12px; left: -4px; width: 44px; height: 44px; border-radius: 50%; border: 0; background: var(--chip); color: var(--ink); font-size: 20px; cursor: pointer; }
   .menu-bg { position: fixed; inset: 0; z-index: 45; background: rgba(0,0,0,.45); display: flex; justify-content: flex-start; }
   .menu { width: min(320px, 86vw); height: 100%; overflow-y: auto; background: var(--bg); color: var(--ink); border-radius: 0 24px 24px 0; padding: calc(16px + env(safe-area-inset-top)) 12px calc(20px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 4px; }
@@ -403,6 +408,9 @@
   .share-banner.loading b::before { content: ""; display: inline-block; width: 14px; height: 14px; margin-right: 8px; vertical-align: -2px; border: 2px solid var(--accent); border-right-color: transparent; border-radius: 50%; animation: tourne .8s linear infinite; }
   .toast { position: fixed; left: 50%; top: calc(12px + env(safe-area-inset-top)); transform: translate(-50%, -150%); max-width: calc(100% - 32px); box-sizing: border-box; background: #1f1a17; color: #fff; padding: 12px 18px; border-radius: 999px; font-weight: 600; font-size: 15px; box-shadow: 0 10px 30px rgba(0,0,0,.25); transition: transform .35s ease; z-index: 50; text-align: center; }
   .toast.show { transform: translate(-50%, 0); }
+  .toast:not(.show) { box-shadow: none; }
+  .toast .toast-btn { margin-left: 12px; background: #fff; color: #1f1a17; border: 0; border-radius: 999px; padding: 4px 12px; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+  .fiche-retirer { justify-self: center; color: #c0392b; min-height: 44px; font-size: 14px; font-weight: 600; margin-top: 4px; }
   .sheet-bg { position: fixed; inset: 0; background: rgba(0,0,0,.55); display: flex; align-items: flex-end; justify-content: center; z-index: 40; }
   .sheet { width: 100%; max-width: 460px; background: var(--card); color: var(--ink); border-radius: 24px 24px 0 0; padding: 24px 20px calc(24px + env(safe-area-inset-bottom)); box-sizing: border-box; text-align: center; }
   @media (min-width: 720px) { .sheet-bg { align-items: center; } .sheet { border-radius: 24px; } }
@@ -571,6 +579,22 @@
   .aj-err { margin: 4px 0 0; font-size: 14px; color: var(--accent); font-weight: 600; }
   .aj-note { margin: 0; font-size: 13px; color: var(--muted); text-align: center; }
   .bs-go:disabled { opacity: .6; cursor: default; }
+
+  /* TICK-43 : retours des utilisateurs (étoiles + commentaire) */
+  .rt-sub { margin: 4px 0 0; font-size: 14px; color: var(--muted); }
+  .rt-scroll { gap: 4px; }
+  .rt-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 0; padding: 4px 0; border: 0; min-width: 0; }
+  .rt-row legend { float: left; padding: 0; font-size: 15px; font-weight: 600; color: var(--ink); }
+  .rt-stars { display: flex; gap: 2px; }
+  .rt-star { width: 40px; height: 44px; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 10px; background: transparent; color: var(--line); font-size: 28px; line-height: 1; cursor: pointer; padding: 0; }
+  .rt-star.on { color: #e7a322; }
+  .rt-star:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .rt-lbl { font-size: 13px; font-weight: 600; color: var(--muted); margin-top: 10px; }
+  .rt-types { display: flex; flex-wrap: wrap; gap: 8px; }
+  .rt-type { min-height: 40px; padding: 0 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--bg); color: var(--ink); font: inherit; font-size: 14px; cursor: pointer; }
+  .rt-type[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); font-weight: 700; }
+  .bs textarea#rt-com { width: 100%; min-height: 96px; box-sizing: border-box; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--bg); color: var(--ink); font: inherit; font-size: 16px; resize: vertical; }
+  .rt-err { margin: 4px 0 0; font-size: 14px; color: var(--accent); font-weight: 600; }
 </style>
 </head>
 <body>
@@ -766,6 +790,32 @@
   </div>
 </div>
 
+<div class="bs-bg hidden" id="bs-retours" role="dialog" aria-modal="true" aria-labelledby="bs-retours-t">
+  <form class="bs" id="rt-form" novalidate>
+    <div class="bs-head">
+      <div><h2 id="bs-retours-t">Ton avis sur N!che</h2><p class="rt-sub">Note ce que tu veux, tout est facultatif.</p></div>
+      <button type="button" class="draw-close" id="rt-x" aria-label="Fermer">✕</button>
+    </div>
+    <div class="bs-scroll rt-scroll">
+        <fieldset class="rt-row"><legend>Utilité</legend><div class="rt-stars"><button type="button" class="rt-star" data-k="utilite" data-v="1" aria-label="1 sur 5" aria-pressed="false">★</button><button type="button" class="rt-star" data-k="utilite" data-v="2" aria-label="2 sur 5" aria-pressed="false">★</button><button type="button" class="rt-star" data-k="utilite" data-v="3" aria-label="3 sur 5" aria-pressed="false">★</button><button type="button" class="rt-star" data-k="utilite" data-v="4" aria-label="4 sur 5" aria-pressed="false">★</button><button type="button" class="rt-star" data-k="utilite" data-v="5" aria-label="5 sur 5" aria-pressed="false">★</button></div></fieldset>
+        <fieldset class="rt-row"><legend>Ergonomie</legend><div class="rt-stars"><button type="button" class="rt-star" data-k="ergonomie" data-v="1" aria-label="1 sur 5" aria-pressed="false">★</button><button type="button" class="rt-star" data-k="ergonomie" data-v="2" aria-label="2 sur 5" aria-pressed="false">★</button><button type="button" class="rt-star" data-k="ergonomie" data-v="3" aria-label="3 sur 5" aria-pressed="false">★</button><button type="button" class="rt-star" data-k="ergonomie" data-v="4" aria-label="4 sur 5" aria-pressed="false">★</button><button type="button" class="rt-star" data-k="ergonomie" data-v="5" aria-label="5 sur 5" aria-pressed="false">★</button></div></fieldset>
+        <fieldset class="rt-row"><legend>Design</legend><div class="rt-stars"><button type="button" class="rt-star" data-k="design" data-v="1" aria-label="1 sur 5" aria-pressed="false">★</button><button type="button" class="rt-star" data-k="design" data-v="2" aria-label="2 sur 5" aria-pressed="false">★</button><button type="button" class="rt-star" data-k="design" data-v="3" aria-label="3 sur 5" aria-pressed="false">★</button><button type="button" class="rt-star" data-k="design" data-v="4" aria-label="4 sur 5" aria-pressed="false">★</button><button type="button" class="rt-star" data-k="design" data-v="5" aria-label="5 sur 5" aria-pressed="false">★</button></div></fieldset>
+        <fieldset class="rt-row"><legend>Fluidité</legend><div class="rt-stars"><button type="button" class="rt-star" data-k="fluidite" data-v="1" aria-label="1 sur 5" aria-pressed="false">★</button><button type="button" class="rt-star" data-k="fluidite" data-v="2" aria-label="2 sur 5" aria-pressed="false">★</button><button type="button" class="rt-star" data-k="fluidite" data-v="3" aria-label="3 sur 5" aria-pressed="false">★</button><button type="button" class="rt-star" data-k="fluidite" data-v="4" aria-label="4 sur 5" aria-pressed="false">★</button><button type="button" class="rt-star" data-k="fluidite" data-v="5" aria-label="5 sur 5" aria-pressed="false">★</button></div></fieldset>
+      <span class="rt-lbl" id="rt-type-lbl">C'est plutôt…</span>
+      <div class="rt-types" role="group" aria-labelledby="rt-type-lbl">
+        <button type="button" class="rt-type" data-t="bug" aria-pressed="false">🐛 Un bug</button>
+        <button type="button" class="rt-type" data-t="idee" aria-pressed="false">💡 Une idée</button>
+        <button type="button" class="rt-type" data-t="galere" aria-pressed="false">😤 Une galère</button>
+        <button type="button" class="rt-type" data-t="coup_de_coeur" aria-pressed="false">❤️ Un coup de cœur</button>
+      </div>
+      <label class="rt-lbl" for="rt-com">Un commentaire ?</label>
+      <textarea id="rt-com" maxlength="1000" placeholder="Ce qui te plaît, ce qui coince, ce que tu aimerais…"></textarea>
+      <p class="rt-err hidden" id="rt-err" role="alert"></p>
+    </div>
+    <button type="submit" class="bs-go" id="rt-go">Envoyer</button>
+  </form>
+</div>
+
 <div class="menu-bg hidden" id="menu">
   <nav class="menu" aria-label="Menu principal">
     <div class="menu-head">
@@ -779,6 +829,7 @@
     <button class="menu-item on" id="menu-restos" type="button" aria-current="page">📍 Mes restos <span class="menu-n" id="menu-n"></span></button>
     <button class="menu-item" id="menu-listes" type="button">🛎️ Mes listes <span class="menu-n" id="menu-nl"></span></button>
     <div class="menu-item off" aria-disabled="true">🗺️ Carte <span class="soon">bientôt</span></div>
+    <button class="menu-item" id="menu-retours" type="button" aria-haspopup="dialog" aria-controls="bs-retours">⭐ Donner mon avis</button>
     <button class="menu-item" id="menu-aide" type="button" aria-expanded="false" aria-controls="menu-aide-box">❓ Aide</button>
     <div class="menu-aide hidden" id="menu-aide-box">
       <p><b>Ajouter un resto :</b> ouvre un reel sur Instagram, appuie sur Partager (l'avion en papier) puis choisis N!che. Il arrive dans ta liste en moins d'une minute.</p>
@@ -902,7 +953,7 @@
     const FERMER = {
       "menu": () => fermerMenu(), "flt": () => fermerFiltres(), "draw": () => fermerTirage(),
       "bs-ajout": () => fermerAjoutManuel(), "bs-new": () => montrer("bs-new", false), "bs-add": () => montrer("bs-add", false),
-      "bs-couv": () => fermerCouv(), "bs-pick": () => fermerPick(),
+      "bs-couv": () => fermerCouv(), "bs-pick": () => fermerPick(), "bs-retours": () => fermerRetours(),
       "sheet-raccourci": () => fermerRaccourci(), "sheet-mdp": () => fermerMdp(),
     };
     const pile = [];                 // fenêtres ouvertes, de la plus ancienne à la plus récente
@@ -1062,9 +1113,22 @@
 
   // Petit message en haut de l'écran, 5 secondes maximum
   let toastTimer = null;
-  function toast(texte) {
+  // TICK-92 : un fin trait sous l'en-tête figé dès qu'on a défilé
+  (function () {
+    const h = document.querySelector("header");
+    const maj = () => h.classList.toggle("colle", window.scrollY > 4);
+    window.addEventListener("scroll", maj, { passive: true }); maj();
+  })();
+  function toast(texte, action) {
     const t = $("toast");
     t.textContent = texte;
+    // TICK-90 : bouton facultatif dans le bandeau (ex. « Annuler »)
+    if (action) {
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "toast-btn"; b.textContent = action.label;
+      b.onclick = () => { t.classList.remove("show"); action.fn(); };
+      t.appendChild(b);
+    }
     t.classList.add("show");
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => t.classList.remove("show"), 5000);
@@ -1653,6 +1717,57 @@
     if (c) ouvrirFiche(c.id.slice(1));
   });
 
+  // ===== TICK-90 : retirer un resto de « Mes restos » =====
+  // On supprime seulement la ligne de l'utilisateur dans `enregistrements` (et le resto de SES listes).
+  // Le catalogue commun `restos` n'est jamais touché : les autres gardent le resto.
+  // La suppression part après 6 s, le temps de pouvoir toucher « Annuler ».
+  const retraitsEnAttente = {};
+  function retirerResto(id) {
+    const r = restos.find((x) => String(x.id) === String(id));
+    if (!r || !currentUser) return;
+    if (!confirm("Retirer « " + r.nom + " » de tes restos ? Il disparaît aussi de tes listes. Ton statut et ton avis seront perdus.")) return;
+    const index = restos.indexOf(r);
+    restos.splice(index, 1);
+    if (ficheId !== null && String(ficheId) === String(r.id)) fermerFiche();
+    majCompteurs();
+    render();
+    const annuler = () => {
+      clearTimeout(retraitsEnAttente[r.id]); delete retraitsEnAttente[r.id];
+      if (!restos.includes(r)) restos.splice(Math.min(index, restos.length), 0, r);
+      majCompteurs(); render(); toast("C'est annulé, " + r.nom + " est toujours là");
+    };
+    toast("Retiré : " + r.nom, { label: "Annuler", fn: annuler });
+    retraitsEnAttente[r.id] = setTimeout(async () => {
+      delete retraitsEnAttente[r.id];
+      try {
+        const { data, error } = await sb.from("enregistrements").delete()
+          .eq("user_id", currentUser.id).eq("resto_id", r.id).select("resto_id");
+        if (error) throw error;
+        if (!data || !data.length) throw new Error("aucune ligne supprimée");
+        // ses listes, même si « Mes listes » n'a pas encore été ouvert
+        const lr = await sb.from("listes").select("id").eq("user_id", currentUser.id);
+        const mesListes = ((lr && lr.data) || []).map((l) => l.id);
+        if (mesListes.length) {
+          const res = await sb.from("liste_restos").delete().eq("resto_id", r.id).in("liste_id", mesListes);
+          if (res.error) console.warn("retirerResto listes", res.error);
+        }
+        if (listes && listes.length) { await chargerListes(); if ($("pg-listes") && !$("pg-listes").classList.contains("hidden")) renderListes(); }
+      } catch (e) {
+        if (!restos.includes(r)) restos.splice(Math.min(index, restos.length), 0, r);
+        majCompteurs(); render();
+        toast("Oups, " + r.nom + " n'a pas pu être retiré. Réessaie dans un instant.");
+        console.warn("retirerResto", e);
+      }
+    }, 6000);
+  }
+  function majCompteurs() {
+    const n = restos.length;
+    $("sub").textContent = n + (n > 1 ? " adresses niche à tester" : " adresse niche à tester");
+    $("menu-n").textContent = n;
+    $("menu-count").textContent = n + (n > 1 ? " restos" : " resto");
+    buildFilters();
+  }
+
   // TICK-13 : avis 👍 / 👎 (toucher à nouveau le même pouce retire l'avis)
   async function changerAvis(id, aime) {
     const r = restos.find((x) => String(x.id) === String(id));
@@ -1871,6 +1986,68 @@
     $("menu-btn").setAttribute("aria-expanded", "false");
     document.body.style.overflow = "";
   }
+
+  // ===== TICK-43 : retours des utilisateurs (table « retours », pas de Make) =====
+  const rt = { notes: {}, type: null };
+  function majRetours() {
+    document.querySelectorAll("#bs-retours .rt-star").forEach((b) => {
+      const n = rt.notes[b.dataset.k] || 0;
+      const on = +b.dataset.v <= n;
+      b.classList.toggle("on", on);
+      b.setAttribute("aria-pressed", String(+b.dataset.v === n));
+    });
+    document.querySelectorAll("#bs-retours .rt-type").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.t === rt.type)));
+  }
+  function erreurRetours(t) { $("rt-err").textContent = t; $("rt-err").classList.toggle("hidden", !t); }
+  function ouvrirRetours() {
+    rt.notes = {}; rt.type = null;
+    $("rt-com").value = "";
+    erreurRetours("");
+    majRetours();
+    fermerMenu();
+    montrer("bs-retours", true);
+    document.body.style.overflow = "hidden";
+    setTimeout(() => { const b = document.querySelector("#bs-retours .rt-star"); if (b) b.focus(); }, 50);
+  }
+  function fermerRetours() {
+    montrer("bs-retours", false);
+    document.body.style.overflow = "";
+  }
+  async function envoyerRetours(e) {
+    e.preventDefault();
+    const commentaire = $("rt-com").value.trim();
+    if (!Object.keys(rt.notes).length && !commentaire) return erreurRetours("Mets au moins une étoile ou un petit mot.");
+    if (!currentUser) return;
+    $("rt-go").disabled = true;
+    $("rt-go").textContent = "Envoi…";
+    const ligne = Object.assign({ commentaire: commentaire || null, type: rt.type }, rt.notes);
+    const { error } = await sb.from("retours").insert(ligne);
+    $("rt-go").disabled = false;
+    $("rt-go").textContent = "Envoyer";
+    if (error) {
+      return erreurRetours(/limite_retours/.test(error.message || "")
+        ? "Tu as déjà envoyé 5 avis aujourd'hui. Merci, reviens demain ! 🙏"
+        : "L'envoi a échoué, réessaie. (" + (error.message || error) + ")");
+    }
+    fermerRetours();
+    toast("Merci pour ton avis ! 🙏");
+  }
+  $("menu-retours").onclick = ouvrirRetours;
+  $("rt-x").onclick = fermerRetours;
+  $("bs-retours").addEventListener("click", (e) => { if (e.target === $("bs-retours")) fermerRetours(); });
+  $("bs-retours").addEventListener("click", (e) => {
+    const s = e.target.closest(".rt-star");
+    if (s) {
+      const k = s.dataset.k, v = +s.dataset.v;
+      if (rt.notes[k] === v) delete rt.notes[k]; else rt.notes[k] = v; // retoucher la même étoile l'efface
+      erreurRetours(""); return majRetours();
+    }
+    const t = e.target.closest(".rt-type");
+    if (t) { rt.type = rt.type === t.dataset.t ? null : t.dataset.t; majRetours(); }
+  });
+  $("rt-com").addEventListener("input", () => erreurRetours(""));
+  $("rt-form").addEventListener("submit", envoyerRetours);
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("bs-retours").classList.contains("hidden")) fermerRetours(); });
   $("menu-btn").onclick = ouvrirMenu;
   $("menu-close").onclick = fermerMenu;
   $("menu-restos").onclick = () => { fermerMenu(); window.scrollTo({ top: 0, behavior: "smooth" }); };
@@ -1936,7 +2113,8 @@
           '<button type="button" class="lk-big down' + (r.avis === false ? " on" : "") + '" data-id="' + esc(r.id) + '" data-v="down" aria-pressed="' + (r.avis === false) + '"><span>👎</span>Pas pour moi</button>' +
         "</div>" +
         '<span class="avis-note">Tu peux liker sans l\'avoir testé (et inversement). Touche à nouveau pour retirer ton avis.</span>' +
-      "</section>";
+      "</section>" +
+      '<button type="button" class="linkbtn fiche-retirer" data-retirer="' + esc(r.id) + '">Retirer de mes restos</button>';
   }
   function afficherFiche(id) {
     const r = trouver(id);
@@ -1978,6 +2156,8 @@
   $("fiche-back").onclick = fermerFiche;
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && ficheId !== null && $("draw").classList.contains("hidden")) fermerFiche(); });
   $("fiche").addEventListener("click", (e) => {
+    const x = e.target.closest("[data-retirer]");
+    if (x) return retirerResto(x.dataset.retirer);
     const b = e.target.closest(".st-btn");
     if (b) return changerStatut(b.dataset.id);
     const l = e.target.closest(".lk-big");
@@ -2275,7 +2455,7 @@
   }
   async function supprimerListe() {
     const l = listeCourante(); if (!l) return;
-    if (!confirm("Supprimer la liste « " + l.titre + " » ? Les restos restent dans N!che.")) return;
+    if (!confirm("Supprimer la liste « " + l.titre + " » ? Les restos restent dans tes restos." + (l.publique ? " Le lien de partage ne marchera plus." : ""))) return;
     const { error } = await sb.from("listes").delete().eq("id", l.id);
     if (error) return toast("Oups : " + error.message);
     brouillon = null;
