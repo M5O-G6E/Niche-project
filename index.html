@@ -551,7 +551,7 @@
   .couv-alerte { display: grid; gap: 8px; padding: 12px 14px; border-radius: 14px; background: var(--accent-soft); color: var(--ink); font-size: 13px; line-height: 1.4; }
   .couv-alerte b { font-size: 15px; }
   .couv-alerte button { justify-self: start; min-height: 38px; padding: 0 14px; border: 0; border-radius: 999px; background: var(--accent); color: #fff; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
-  .fiche-liste { min-height: 48px; border: 1.5px dashed var(--accent); border-radius: 999px; background: transparent; color: var(--accent); font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; }
+  .fiche-liste { flex: none; width: 56px; min-height: 48px; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 12px; background: var(--accent-soft); color: var(--accent); cursor: pointer; padding: 0; }
 
   /* TICK-80 : ajout manuel d'un resto (bouton ＋ et fenêtre) */
   body { padding-bottom: calc(170px + env(safe-area-inset-bottom)); }
@@ -2103,9 +2103,11 @@
       '<div class="actions">' +
         (r.lien_maps ? '<a class="go" href="' + esc(r.lien_maps) + '" target="_blank" rel="noopener">Itinéraire</a>' : "") +
         (r.lien_instagram ? '<a class="ig" href="' + esc(r.lien_instagram) + '" target="_blank" rel="noopener">Voir le reel</a>' : "") +
+        '<button type="button" class="fiche-liste" data-id="' + esc(r.id) + '" aria-label="Ajouter à une liste" title="Ajouter à une liste">' +
+          '<svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18h14"/><path d="M4.5 18a5.5 5.5 0 0 1 11 0"/><path d="M10 12.5V11"/><path d="M19 3v6M16 6h6"/></svg>' +
+        "</button>" +
       "</div>" +
       (r.lien_maps ? '<a class="fiche-photos" href="' + esc(r.lien_maps) + '" target="_blank" rel="noopener">Voir les photos sur Google Maps →</a>' : "") +
-      '<button type="button" class="fiche-liste" data-id="' + esc(r.id) + '">＋ Ajouter à une liste</button>' +
       '<section class="avis-box" aria-label="Ton avis">' +
         "<h3>Ton avis</h3>" +
         '<div class="avis-row">' +
