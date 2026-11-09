@@ -635,6 +635,17 @@
   .pf-stats b { font-size: 20px; color: var(--ink); }
   .encart { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 14px 16px; color: var(--muted); font-size: 14px; }
   .encart b { color: var(--ink); }
+  .ami-row { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 60px; padding: 8px 12px; margin-bottom: 8px; background: var(--card); border: 1px solid var(--line); border-radius: 16px; color: var(--ink); font: inherit; font-size: 16px; font-weight: 600; text-align: left; cursor: pointer; }
+  .ami-row .t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ami-row .chev { color: var(--muted); font-size: 22px; }
+  .mini-av { flex: none; width: 44px; height: 44px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); font: 800 20px/1 "Baloo 2", system-ui, sans-serif; display: flex; align-items: center; justify-content: center; }
+  .ami-titre { margin: 8px 0 0; font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .ami-liste { display: grid; gap: 10px; }
+  .ami-resto { display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: var(--card); border: 1px solid var(--line); border-radius: 16px; }
+  .ami-resto .t { flex: 1; min-width: 0; display: grid; gap: 2px; }
+  .ami-resto .t b { font-family: Fraunces, Georgia, serif; font-weight: 600; font-size: 16px; overflow-wrap: anywhere; }
+  .ami-resto .t span { font-size: 13px; color: var(--muted); }
+  .ami-resto a { flex: none; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--chip); text-decoration: none; }
   .ex-vide { text-align: center; color: var(--muted); padding: 30px 10px; }
   .ex-vide .big { font-size: 40px; }
   .rg-item { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 52px; padding: 0 6px; border: 0; border-bottom: 1px solid var(--line); background: none; color: var(--ink); font: inherit; font-size: 16px; font-weight: 600; text-align: left; cursor: pointer; }
@@ -980,8 +991,12 @@
 <div class="pg hidden" id="pg-explorer" aria-labelledby="ex-titre">
   <div class="pg-in">
     <div class="pg-top"><h1 id="ex-titre">Explorer</h1></div>
-    <div class="ex-vide"><div class="big" aria-hidden="true">🔭</div><p><b>Bientôt ici</b><br>Retrouve tes potes par leur pseudo, suis-les et découvre leurs listes publiques.</p></div>
+    <label class="search-box"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input class="search" id="ex-q" type="search" placeholder="Chercher un pote par son pseudo" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Chercher un pote par son pseudo"></label>
+    <div id="ex-res" aria-live="polite"></div>
   </div>
+</div>
+<div class="pg hidden" id="pg-ami" aria-labelledby="ami-pseudo">
+  <div class="pg-in" id="ami"></div>
 </div>
 <div class="pg hidden" id="pg-profil" aria-labelledby="pf-pseudo">
   <div class="pg-in">
@@ -991,7 +1006,7 @@
       <div class="pf-pseudo" id="pf-pseudo"></div>
     </div>
     <div class="pf-stats" id="pf-stats"></div>
-    <div class="encart"><b>Bientôt : ton profil public.</b> Tes potes pourront te suivre et voir tes listes publiques. Pour l'instant, ton répertoire, tes to do et tes likes restent privés ; seules les listes que tu rends publiques se partagent.</div>
+    <div class="encart"><b>Visible par tes potes :</b> ton pseudo et tes listes publiques (dans Explorer). Ton répertoire, tes to do, tes likes et tes listes privées restent privés, et tes restos testés aussi tant que tu ne choisis pas de les montrer.</div>
   </div>
 </div>
 <div class="bs-bg hidden" id="bs-plus" role="dialog" aria-modal="true" aria-labelledby="bs-plus-t">
@@ -1057,6 +1072,7 @@
       "bs-couv": () => fermerCouv(), "bs-pick": () => fermerPick(), "bs-retours": () => fermerRetours(),
       "sheet-raccourci": () => fermerRaccourci(), "sheet-mdp": () => fermerMdp(),
       "bs-plus": () => montrer("bs-plus", false), "bs-reglages": () => montrer("bs-reglages", false),
+      "pg-public": () => fermerPublique(),
     };
     const pile = [];                 // fenêtres ouvertes, de la plus ancienne à la plus récente
     const fermeesParRetour = new Set();
@@ -2418,6 +2434,8 @@
     else { montrer("pg-liste", true); renderListe(); }
     if (s.listes) renderListes();
     montrer("pg-explorer", s.onglet === "explorer");
+    montrer("pg-ami", !!s.ami);
+    if (s.ami) afficherAmi(s.ami, s.pseudo);
     montrer("pg-profil", s.onglet === "profil");
     if (s.onglet === "profil") renderProfil();
     majOnglets(ongletDe(s));
@@ -2799,6 +2817,9 @@
     if (!code) return;
     q.delete("liste");
     history.replaceState(null, "", location.pathname + (q.toString() ? "?" + q : ""));
+    afficherListePublique(code);
+  })();
+  async function afficherListePublique(code) {
     montrer("pg-public", true);
     document.body.style.overflow = "hidden";
     $("pub").innerHTML = '<p class="ls-vide">Chargement de la liste…</p>';
@@ -2825,9 +2846,13 @@
         "" + (currentUser ? "" : '<div class="pub-cta"><b>Toi aussi, garde tes pépites</b><span>N!che transforme les reels Instagram en adresses à tester.</span><button type="button" id="pub-go">Découvrir N!che</button></div>');
       teinterHero($("pub"));
     }
-  })();
+  }
+  function fermerPublique() {
+    montrer("pg-public", false);
+    document.body.style.overflow = profondeur(history.state) ? "hidden" : "";
+  }
   $("pg-public").addEventListener("click", (e) => {
-    if (e.target.closest("#pub-x") || e.target.closest("#pub-go")) { montrer("pg-public", false); document.body.style.overflow = ""; }
+    if (e.target.closest("#pub-x") || e.target.closest("#pub-go")) fermerPublique();
   });
 
   // ===== TICK-98 : barre d'onglets (Restos · Listes · ＋ · Explorer · Profil) =====
@@ -2853,7 +2878,7 @@
       return;
     }
     const page = nom === "listes" ? "pg-listes" : "pg-" + nom;
-    if (ongletDe(s) === nom && s.liste == null) { $(page).scrollTo({ top: 0, behavior: "smooth" }); return; }
+    if (ongletDe(s) === nom && s.liste == null && !s.ami) { $(page).scrollTo({ top: 0, behavior: "smooth" }); return; }
     if (nom === "listes" || nom === "profil") await chargerListes();
     const cible = nom === "listes" ? { listes: 1, d: 1 } : { onglet: nom, d: 1 };
     if (p === 0) history.pushState(cible, "", location.pathname);
@@ -2907,6 +2932,78 @@
     if (profondeur(history.state) > 0) history.go(-profondeur(history.state));
     await sb.auth.signOut();
   };
+
+  // ===== TICK-38, étape 1 : Explorer (recherche par pseudo) et profil d'un pote =====
+  // Tout passe par des lectures autorisées : chercher_profils (id + pseudo), listes publiques,
+  // restos_testes_de (vide si le pote ne l'a pas autorisé). Jamais de token, de to do ni de likes.
+  const initiale = (p) => esc(((p || "?").trim()[0] || "?").toUpperCase());
+  let exMinuteur = null, exDerniere = "";
+  $("ex-q").addEventListener("input", (e) => {
+    clearTimeout(exMinuteur);
+    const q = e.target.value.trim().replace(/^@/, "");
+    exMinuteur = setTimeout(() => chercherPotes(q), 250);
+  });
+  function aideExplorer() {
+    $("ex-res").innerHTML = '<div class="ex-vide"><div class="big" aria-hidden="true">🔭</div><p>Tape le pseudo d\'un pote pour voir ses listes publiques.</p></div>';
+  }
+  aideExplorer();
+  async function chercherPotes(q) {
+    exDerniere = q;
+    if (!q) { aideExplorer(); return; }
+    const { data, error } = await sb.rpc("chercher_profils", { q });
+    if (q !== exDerniere) return; // une frappe plus récente a pris le relais
+    if (error) { $("ex-res").innerHTML = '<p class="ls-vide">Oups, la recherche n\'a pas marché. Réessaie dans un instant.</p>'; console.warn("chercher_profils", error); return; }
+    if (!data || !data.length) { $("ex-res").innerHTML = '<p class="ls-vide">Personne avec ce pseudo pour l\'instant.</p>'; return; }
+    $("ex-res").innerHTML = data.map((p) =>
+      '<button type="button" class="ami-row" data-ami="' + esc(p.id) + '" data-pseudo="' + esc(p.pseudo) + '"><span class="mini-av" aria-hidden="true">' + initiale(p.pseudo) + '</span><span class="t">@' + esc(p.pseudo) + '</span><span class="chev" aria-hidden="true">›</span></button>'
+    ).join("");
+  }
+  $("ex-res").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-ami]");
+    if (!b) return;
+    amiAffiche = null;
+    const st = { onglet: "explorer", ami: b.dataset.ami, pseudo: b.dataset.pseudo, d: profondeur(history.state) + 1 };
+    history.pushState(st, "", location.pathname);
+    etatPages(st);
+    $("pg-ami").scrollTop = 0;
+  });
+  let amiAffiche = null;
+  async function afficherAmi(uid, pseudo) {
+    if (amiAffiche === uid && $("ami").dataset.ok) return;
+    amiAffiche = uid; delete $("ami").dataset.ok;
+    const p = esc(pseudo || "");
+    const tete = '<div class="pg-top"><button type="button" class="rond" id="ami-retour" aria-label="Retour">‹</button></div>' +
+      '<div class="pf-head"><div class="pf-av" aria-hidden="true">' + initiale(pseudo) + '</div><div class="pf-pseudo" id="ami-pseudo">@' + p + "</div></div>";
+    $("ami").innerHTML = tete + '<p class="ls-vide">Chargement…</p>';
+    const [ls, rt] = await Promise.all([
+      sb.from("listes").select("id,titre,classement,code_partage,couverture_emoji,couverture_fond,couverture_photo,modifie_le").eq("user_id", uid).eq("publique", true).order("modifie_le", { ascending: false }),
+      sb.rpc("restos_testes_de", { uid }),
+    ]);
+    if (amiAffiche !== uid) return;
+    if (ls.error) console.warn("listes du pote", ls.error);
+    if (rt.error) console.warn("restos_testes_de", rt.error);
+    const listesAmi = (ls.data || []).filter((l) => l.code_partage);
+    const testes = rt.data || [];
+    const nb = listesAmi.length;
+    let h = tete + '<div class="pf-stats"><div><b>' + nb + "</b>" + (nb > 1 ? "listes publiques" : "liste publique") + "</div></div>";
+    h += '<h2 class="ami-titre">Ses listes</h2>';
+    h += nb ? '<div class="ami-liste">' + listesAmi.map((l) =>
+      '<button type="button" class="ls-card" data-code="' + esc(l.code_partage) + '">' + couvBloc(photoOk(l.couverture_photo) || l.couverture_emoji ? l : Object.assign({}, l, { couverture_emoji: "🍽️" }), [], "mini").replace(/^<div/, "<span").replace(/<\/div>$/, "</span>") +
+      '<span class="t"><b>' + esc(l.titre) + "</b><span>" + (l.classement ? "🏆 Classement" : "Liste publique") + "</span></span></button>").join("") + "</div>"
+      : '<p class="ls-vide">@' + p + " n'a pas encore de liste publique.</p>";
+    h += '<h2 class="ami-titre">Ses restos testés</h2>';
+    h += testes.length ? '<div class="ami-liste">' + testes.map((r) =>
+      '<div class="ami-resto"><span class="t"><b>' + esc(r.nom) + "</b><span>" + [r.zone, r.cuisine].filter(Boolean).map(esc).join(" · ") + "</span></span>" +
+      (r.lien_maps ? '<a href="' + esc(r.lien_maps) + '" target="_blank" rel="noopener" aria-label="Itinéraire vers ' + esc(r.nom) + '">📍</a>' : "") + "</div>").join("") + "</div>"
+      : '<p class="ls-vide">@' + p + " garde ses restos testés pour lui.</p>";
+    $("ami").innerHTML = h;
+    $("ami").dataset.ok = "1";
+  }
+  $("ami").addEventListener("click", (e) => {
+    if (e.target.closest("#ami-retour")) { history.back(); return; }
+    const c = e.target.closest("[data-code]");
+    if (c) afficherListePublique(c.dataset.code);
+  });
   NAV.demarrer();
 </script>
 </body>
