@@ -661,6 +661,11 @@
   .ami-row .t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .ami-row .chev { color: var(--muted); font-size: 22px; }
   .mini-av { flex: none; width: 44px; height: 44px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); font: 800 20px/1 "Baloo 2", system-ui, sans-serif; display: flex; align-items: center; justify-content: center; }
+  .ami-suivre-ligne { display: flex; justify-content: center; }
+  .ami-suivre { min-width: 150px; min-height: 44px; padding: 0 22px; border-radius: 999px; border: 1.5px solid var(--accent); background: var(--accent); color: #fff; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer; }
+  .ami-suivre.suivi { background: transparent; color: var(--ink); border-color: var(--line); }
+  .ami-suivre:disabled { opacity: .6; }
+  .tag-suivi { flex: none; font-size: 12px; font-weight: 700; padding: 3px 8px; border-radius: 999px; background: var(--chip); color: var(--muted); }
   .ami-titre { margin: 8px 0 0; font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
   .ami-liste { display: grid; gap: 10px; }
   .ami-resto { display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: var(--card); border: 1px solid var(--line); border-radius: 16px; }
@@ -1046,6 +1051,7 @@
       <div class="pf-pseudo" id="pf-pseudo"></div>
     </div>
     <div class="pf-stats" id="pf-stats"></div>
+    <div class="pf-stats" id="pf-stats2"></div>
     <div class="encart" id="pf-encart"></div>
   </div>
 </div>
@@ -1693,6 +1699,7 @@
   function showAuth() {
     currentUser = null;
     restos = [];
+    mesSuivis.clear(); mesSuivisCharges = false;
     document.body.classList.add("portal");
     $("auth").classList.remove("hidden");
     $("app").classList.add("hidden");
@@ -3045,6 +3052,18 @@
     $("pf-av").textContent = $("menu-av").textContent;
     const stat = (n, l) => "<div><b>" + n + "</b>" + l + "</div>";
     $("pf-stats").innerHTML = stat(restos.length, "restos") + stat(restos.filter(estDone).length, "testés") + stat(listes.length, listes.length > 1 ? "listes" : "liste");
+    $("pf-stats2").innerHTML = stat("…", "abonnés") + stat("…", "abonnements");
+    compterAbonnes();
+  }
+  async function compterAbonnes() {
+    if (!currentUser) return;
+    const [a, b] = await Promise.all([
+      sb.from("abonnements").select("suiveur", { count: "exact", head: true }).eq("suivi", currentUser.id),
+      sb.from("abonnements").select("suivi", { count: "exact", head: true }).eq("suiveur", currentUser.id),
+    ]);
+    const n1 = a.error ? "?" : a.count || 0, n2 = b.error ? "?" : b.count || 0;
+    if (a.error || b.error) console.warn("compteurs abonnements", a.error || b.error);
+    $("pf-stats2").innerHTML = "<div><b>" + n1 + "</b>" + (n1 === 1 ? "abonné" : "abonnés") + "</div><div><b>" + n2 + "</b>" + (n2 === 1 ? "abonnement" : "abonnements") + "</div>";
   }
   $("pf-reglages").onclick = () => montrer("bs-reglages", true);
   $("rg-x").onclick = () => montrer("bs-reglages", false);
@@ -3083,8 +3102,11 @@
     if (q !== exDerniere) return; // une frappe plus récente a pris le relais
     if (error) { $("ex-res").innerHTML = '<p class="ls-vide">Oups, la recherche n\'a pas marché. Réessaie dans un instant.</p>'; console.warn("chercher_profils", error); return; }
     if (!data || !data.length) { $("ex-res").innerHTML = '<p class="ls-vide">Personne avec ce pseudo pour l\'instant.</p>'; return; }
+    await chargerMesSuivis();
+    if (q !== exDerniere) return;
     $("ex-res").innerHTML = data.map((p) =>
-      '<button type="button" class="ami-row" data-ami="' + esc(p.id) + '" data-pseudo="' + esc(p.pseudo) + '"><span class="mini-av" aria-hidden="true">' + initiale(p.pseudo) + '</span><span class="t">@' + esc(p.pseudo) + '</span><span class="chev" aria-hidden="true">›</span></button>'
+      '<button type="button" class="ami-row" data-ami="' + esc(p.id) + '" data-pseudo="' + esc(p.pseudo) + '"><span class="mini-av" aria-hidden="true">' + initiale(p.pseudo) + '</span><span class="t">@' + esc(p.pseudo) + "</span>" +
+      (mesSuivis.has(p.id) ? '<span class="tag-suivi">Suivi</span>' : "") + '<span class="chev" aria-hidden="true">›</span></button>'
     ).join("");
   }
   $("ex-res").addEventListener("click", (e) => {
@@ -3104,17 +3126,20 @@
     const tete = '<div class="pg-top"><button type="button" class="rond" id="ami-retour" aria-label="Retour">‹</button></div>' +
       '<div class="pf-head"><div class="pf-av" aria-hidden="true">' + initiale(pseudo) + '</div><div class="pf-pseudo" id="ami-pseudo">@' + p + "</div></div>";
     $("ami").innerHTML = tete + '<p class="ls-vide">Chargement…</p>';
-    const [ls, rt] = await Promise.all([
+    const [ls, rt, ab] = await Promise.all([
       sb.from("listes").select("id,titre,classement,code_partage,couverture_emoji,couverture_fond,couverture_photo,modifie_le").eq("user_id", uid).eq("publique", true).order("modifie_le", { ascending: false }),
       sb.rpc("restos_testes_de", { uid }),
+      sb.from("abonnements").select("suivi").eq("suiveur", currentUser.id).eq("suivi", uid),
     ]);
+    if (ab.error) console.warn("abonnements", ab.error);
+    if (ab.data) { if (ab.data.length) mesSuivis.add(uid); else mesSuivis.delete(uid); }
     if (amiAffiche !== uid) return;
     if (ls.error) console.warn("listes du pote", ls.error);
     if (rt.error) console.warn("restos_testes_de", rt.error);
     const listesAmi = (ls.data || []).filter((l) => l.code_partage);
     const testes = rt.data || [];
     const nb = listesAmi.length;
-    let h = tete + '<div class="pf-stats"><div><b>' + nb + "</b>" + (nb > 1 ? "listes publiques" : "liste publique") + "</div></div>";
+    let h = tete + '<div class="ami-suivre-ligne"><button type="button" class="ami-suivre" id="ami-suivre" data-uid="' + esc(uid) + '"></button></div>' + '<div class="pf-stats"><div><b>' + nb + "</b>" + (nb > 1 ? "listes publiques" : "liste publique") + "</div></div>";
     h += '<h2 class="ami-titre">Ses listes</h2>';
     h += nb ? '<div class="ami-liste">' + listesAmi.map((l) =>
       '<button type="button" class="ls-card" data-code="' + esc(l.code_partage) + '">' + couvBloc(photoOk(l.couverture_photo) || l.couverture_emoji ? l : Object.assign({}, l, { couverture_emoji: "🍽️" }), [], "mini").replace(/^<div/, "<span").replace(/<\/div>$/, "</span>") +
@@ -3126,10 +3151,12 @@
       (r.lien_maps ? '<a href="' + esc(r.lien_maps) + '" target="_blank" rel="noopener" aria-label="Itinéraire vers ' + esc(r.nom) + '">📍</a>' : "") + "</div>").join("") + "</div>"
       : '<p class="ls-vide">@' + p + " garde ses restos testés pour lui.</p>";
     $("ami").innerHTML = h;
+    majBoutonSuivre();
     $("ami").dataset.ok = "1";
   }
   $("ami").addEventListener("click", (e) => {
     if (e.target.closest("#ami-retour")) { history.back(); return; }
+    if (e.target.closest("#ami-suivre")) { basculerSuivi(e.target.closest("#ami-suivre").dataset.uid); return; }
     const c = e.target.closest("[data-code]");
     if (c) afficherListePublique(c.dataset.code);
   });
@@ -3205,6 +3232,44 @@
     if (await enregistrerTestes(oui)) toast(oui ? "Tes restos testés sont visibles par tes potes" : "Tes restos testés sont privés");
   };
   majInterrupteurTestes();
+
+  // ===== TICK-39 : suivre un pote (table abonnements : suiveur = moi par défaut, suivi = le pote) =====
+  const mesSuivis = new Set();
+  let mesSuivisCharges = false;
+  async function chargerMesSuivis() {
+    if (mesSuivisCharges || !currentUser) return;
+    const { data, error } = await sb.from("abonnements").select("suivi").eq("suiveur", currentUser.id);
+    if (error) { console.warn("mes abonnements", error); return; }
+    mesSuivis.clear(); (data || []).forEach((x) => mesSuivis.add(x.suivi));
+    mesSuivisCharges = true;
+  }
+  function majBoutonSuivre() {
+    const b = $("ami-suivre"); if (!b) return;
+    const oui = mesSuivis.has(b.dataset.uid);
+    b.classList.toggle("suivi", oui);
+    b.textContent = oui ? "Suivi ✓" : "Suivre";
+    b.setAttribute("aria-pressed", String(oui));
+    b.setAttribute("aria-label", oui ? "Ne plus suivre" : "Suivre");
+  }
+  async function basculerSuivi(uid) {
+    if (!currentUser || !uid || uid === currentUser.id) return;
+    const b = $("ami-suivre"); if (b) b.disabled = true;
+    const suivait = mesSuivis.has(uid);
+    if (suivait) mesSuivis.delete(uid); else mesSuivis.add(uid);
+    majBoutonSuivre();
+    const { error } = suivait
+      ? await sb.from("abonnements").delete().eq("suiveur", currentUser.id).eq("suivi", uid)
+      : await sb.from("abonnements").insert({ suivi: uid });
+    if (b) b.disabled = false;
+    if (error && !(error.code === "23505" && !suivait)) { // 23505 = déjà suivi : rien à faire
+      console.warn("abonnements", error);
+      if (suivait) mesSuivis.add(uid); else mesSuivis.delete(uid);
+      majBoutonSuivre();
+      toast("Oups, ça n'a pas marché. Réessaie dans un instant.");
+      return;
+    }
+    toast(suivait ? "Tu ne suis plus ce pote" : "Tu suis ce pote 🙌");
+  }
   NAV.demarrer();
 </script>
 </body>
