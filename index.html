@@ -662,6 +662,12 @@
   .ami-row .chev { color: var(--muted); font-size: 22px; }
   .mini-av { flex: none; width: 44px; height: 44px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); font: 800 20px/1 "Baloo 2", system-ui, sans-serif; display: flex; align-items: center; justify-content: center; }
   .ami-suivre-ligne { display: flex; justify-content: center; }
+  .pf-cpt { display: flex; flex-direction: column; align-items: center; border: 0; background: none; padding: 4px 8px; border-radius: 12px; color: var(--muted); font: inherit; font-size: 13px; cursor: pointer; }
+  .pf-cpt b { font-size: 20px; color: var(--ink); }
+  .pf-cpt:active { background: var(--chip); }
+  .rel-row { display: flex; align-items: center; gap: 12px; padding: 8px 2px; border-bottom: 1px solid var(--line); }
+  .rel-row .t { flex: 1; min-width: 0; border: 0; background: none; padding: 0; color: var(--ink); font: inherit; font-size: 16px; font-weight: 600; text-align: left; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .rel-row .ami-suivre { min-width: 0; min-height: 38px; padding: 0 14px; font-size: 14px; }
   .ami-suivre { min-width: 150px; min-height: 44px; padding: 0 22px; border-radius: 999px; border: 1.5px solid var(--accent); background: var(--accent); color: #fff; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer; }
   .ami-suivre.suivi { background: transparent; color: var(--ink); border-color: var(--line); }
   .ami-suivre:disabled { opacity: .6; }
@@ -1088,6 +1094,16 @@
     <button type="button" class="sheet-later" id="testes-non" style="margin:0">Non, je les garde pour moi</button>
   </div>
 </div>
+<div class="bs-bg hidden" id="bs-relations" role="dialog" aria-modal="true" aria-labelledby="bs-relations-t">
+  <div class="bs">
+    <div class="bs-head"><h2 id="bs-relations-t">Tes potes</h2><button type="button" class="draw-close" id="rel-x" aria-label="Fermer">✕</button></div>
+    <div class="couv-onglets" role="tablist">
+      <button type="button" role="tab" id="rel-tab-abonnes" aria-selected="true">Abonnés</button>
+      <button type="button" role="tab" id="rel-tab-abonnements" aria-selected="false">Abonnements</button>
+    </div>
+    <div class="bs-scroll" id="rel-liste" aria-live="polite"></div>
+  </div>
+</div>
 <nav class="tabbar hidden" id="tabbar" aria-label="Navigation">
   <button type="button" class="tab" data-onglet="restos" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>Restos</button>
   <button type="button" class="tab" data-onglet="listes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Listes</button>
@@ -1129,6 +1145,7 @@
       "sheet-raccourci": () => fermerRaccourci(),
       "bs-plus": () => montrer("bs-plus", false), "bs-reglages": () => montrer("bs-reglages", false),
       "pg-public": () => fermerPublique(),
+      "bs-relations": () => montrer("bs-relations", false),
       "sheet-envoye": () => montrer("sheet-envoye", false),
       "bs-testes": () => repondreTestes(false),
     };
@@ -3063,7 +3080,7 @@
     ]);
     const n1 = a.error ? "?" : a.count || 0, n2 = b.error ? "?" : b.count || 0;
     if (a.error || b.error) console.warn("compteurs abonnements", a.error || b.error);
-    $("pf-stats2").innerHTML = "<div><b>" + n1 + "</b>" + (n1 === 1 ? "abonné" : "abonnés") + "</div><div><b>" + n2 + "</b>" + (n2 === 1 ? "abonnement" : "abonnements") + "</div>";
+    $("pf-stats2").innerHTML = '<button type="button" class="pf-cpt" data-rel="abonnes"><b>' + n1 + "</b>" + (n1 === 1 ? "abonné" : "abonnés") + '</button><button type="button" class="pf-cpt" data-rel="abonnements"><b>' + n2 + "</b>" + (n2 === 1 ? "abonnement" : "abonnements") + "</button>";
   }
   $("pf-reglages").onclick = () => montrer("bs-reglages", true);
   $("rg-x").onclick = () => montrer("bs-reglages", false);
@@ -3126,11 +3143,14 @@
     const tete = '<div class="pg-top"><button type="button" class="rond" id="ami-retour" aria-label="Retour">‹</button></div>' +
       '<div class="pf-head"><div class="pf-av" aria-hidden="true">' + initiale(pseudo) + '</div><div class="pf-pseudo" id="ami-pseudo">@' + p + "</div></div>";
     $("ami").innerHTML = tete + '<p class="ls-vide">Chargement…</p>';
-    const [ls, rt, ab] = await Promise.all([
+    const [ls, rt, ab, cp] = await Promise.all([
       sb.from("listes").select("id,titre,classement,code_partage,couverture_emoji,couverture_fond,couverture_photo,modifie_le").eq("user_id", uid).eq("publique", true).order("modifie_le", { ascending: false }),
       sb.rpc("restos_testes_de", { uid }),
       sb.from("abonnements").select("suivi").eq("suiveur", currentUser.id).eq("suivi", uid),
+      sb.rpc("compteurs_profil", { uid }),
     ]);
+    if (cp.error) console.warn("compteurs_profil", cp.error);
+    const cpt = cp.data && cp.data[0];
     if (ab.error) console.warn("abonnements", ab.error);
     if (ab.data) { if (ab.data.length) mesSuivis.add(uid); else mesSuivis.delete(uid); }
     if (amiAffiche !== uid) return;
@@ -3139,7 +3159,10 @@
     const listesAmi = (ls.data || []).filter((l) => l.code_partage);
     const testes = rt.data || [];
     const nb = listesAmi.length;
-    let h = tete + '<div class="ami-suivre-ligne"><button type="button" class="ami-suivre" id="ami-suivre" data-uid="' + esc(uid) + '"></button></div>' + '<div class="pf-stats"><div><b>' + nb + "</b>" + (nb > 1 ? "listes publiques" : "liste publique") + "</div></div>";
+    const st = (n, un, plusieurs) => "<div><b>" + n + "</b>" + (n > 1 ? plusieurs : un) + "</div>";
+    let h = tete + '<div class="ami-suivre-ligne"><button type="button" class="ami-suivre" id="ami-suivre" data-uid="' + esc(uid) + '"></button></div>' +
+      '<div class="pf-stats" id="ami-stats">' + st(nb, "liste publique", "listes publiques") +
+      (cpt ? st(cpt.abonnes, "abonné", "abonnés") + st(cpt.abonnements, "abonnement", "abonnements") : "") + "</div>";
     h += '<h2 class="ami-titre">Ses listes</h2>';
     h += nb ? '<div class="ami-liste">' + listesAmi.map((l) =>
       '<button type="button" class="ls-card" data-code="' + esc(l.code_partage) + '">' + couvBloc(photoOk(l.couverture_photo) || l.couverture_emoji ? l : Object.assign({}, l, { couverture_emoji: "🍽️" }), [], "mini").replace(/^<div/, "<span").replace(/<\/div>$/, "</span>") +
@@ -3269,7 +3292,66 @@
       return;
     }
     toast(suivait ? "Tu ne suis plus ce pote" : "Tu suis ce pote 🙌");
+    if ($("ami-stats") && amiAffiche === uid) {
+      const { data } = await sb.rpc("compteurs_profil", { uid });
+      const c = data && data[0], d = $("ami-stats").children[1];
+      if (c && d) d.innerHTML = "<b>" + c.abonnes + "</b>" + (c.abonnes > 1 ? "abonnés" : "abonné");
+    }
+    if (!$("bs-relations").classList.contains("hidden")) chargerRelations();
+    if (!$("pg-profil").classList.contains("hidden")) compterAbonnes();
   }
+
+  // ===== TICK-39 : fenêtre abonnés / abonnements (fonction mes_relations : id, pseudo, il_me_suit, je_le_suis) =====
+  let relOnglet = "abonnes", relations = [];
+  async function chargerRelations() {
+    const { data, error } = await sb.rpc("mes_relations");
+    if (error) { console.warn("mes_relations", error); $("rel-liste").innerHTML = '<p class="ls-vide">Oups, la liste n\'a pas pu se charger.</p>'; return; }
+    relations = (data || []).sort((a, b) => (a.pseudo || "").localeCompare(b.pseudo || "", "fr"));
+    relations.forEach((x) => { if (x.je_le_suis) mesSuivis.add(x.id); else mesSuivis.delete(x.id); });
+    renderRelations();
+  }
+  function renderRelations() {
+    $("rel-tab-abonnes").setAttribute("aria-selected", String(relOnglet === "abonnes"));
+    $("rel-tab-abonnements").setAttribute("aria-selected", String(relOnglet === "abonnements"));
+    const liste = relations.filter((x) => (relOnglet === "abonnes" ? x.il_me_suit : x.je_le_suis));
+    if (!liste.length) {
+      $("rel-liste").innerHTML = '<p class="ls-vide">' + (relOnglet === "abonnes" ? "Personne ne te suit encore. Partage tes listes publiques !" : "Tu ne suis personne pour l'instant. Cherche tes potes dans Explorer.") + "</p>";
+      return;
+    }
+    $("rel-liste").innerHTML = liste.map((x) => {
+      const suivi = mesSuivis.has(x.id);
+      const libelle = suivi ? "Suivi ✓" : relOnglet === "abonnes" ? "Suivre aussi" : "Suivre";
+      return '<div class="rel-row"><span class="mini-av" aria-hidden="true">' + initiale(x.pseudo) + '</span>' +
+        '<button type="button" class="t" data-voir="' + esc(x.id) + '" data-pseudo="' + esc(x.pseudo) + '">@' + esc(x.pseudo) + "</button>" +
+        '<button type="button" class="ami-suivre' + (suivi ? " suivi" : "") + '" data-suivre="' + esc(x.id) + '" aria-pressed="' + suivi + '">' + libelle + "</button></div>";
+    }).join("");
+  }
+  function ouvrirRelations(onglet) {
+    relOnglet = onglet || "abonnes";
+    $("rel-liste").innerHTML = '<p class="ls-vide">Chargement…</p>';
+    montrer("bs-relations", true);
+    chargerRelations();
+  }
+  $("pf-stats2").addEventListener("click", (e) => { const b = e.target.closest("[data-rel]"); if (b) ouvrirRelations(b.dataset.rel); });
+  $("rel-x").onclick = () => montrer("bs-relations", false);
+  $("bs-relations").addEventListener("click", async (e) => {
+    if (e.target === $("bs-relations")) return montrer("bs-relations", false);
+    if (e.target.closest("#rel-tab-abonnes")) { relOnglet = "abonnes"; return renderRelations(); }
+    if (e.target.closest("#rel-tab-abonnements")) { relOnglet = "abonnements"; return renderRelations(); }
+    const s = e.target.closest("[data-suivre]");
+    if (s) { s.disabled = true; await basculerSuivi(s.dataset.suivre); return; }
+    const v = e.target.closest("[data-voir]");
+    if (v) {
+      montrer("bs-relations", false);
+      setTimeout(() => {
+        amiAffiche = null;
+        const st = { onglet: ongletDe(history.state) === "restos" ? "profil" : ongletDe(history.state), ami: v.dataset.voir, pseudo: v.dataset.pseudo, d: profondeur(history.state) + 1 };
+        history.pushState(st, "", location.pathname);
+        etatPages(st);
+        $("pg-ami").scrollTop = 0;
+      }, 250);
+    }
+  });
   NAV.demarrer();
 </script>
 </body>
