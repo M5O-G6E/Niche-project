@@ -664,6 +664,9 @@
   .ami-resto .t b { font-family: Fraunces, Georgia, serif; font-weight: 600; font-size: 16px; overflow-wrap: anywhere; }
   .ami-resto .t span { font-size: 13px; color: var(--muted); }
   .ami-resto a { flex: none; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--chip); text-decoration: none; }
+  .testes-txt { margin: 0; font-size: 15px; line-height: 1.45; color: var(--ink); }
+  .testes-txt.petit { font-size: 13px; color: var(--muted); }
+  .rg-switch { width: 100%; margin: 8px 0; }
   .ex-vide { text-align: center; color: var(--muted); padding: 30px 10px; }
   .ex-vide .big { font-size: 40px; }
   .rg-item { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 52px; padding: 0 6px; border: 0; border-bottom: 1px solid var(--line); background: none; color: var(--ink); font: inherit; font-size: 16px; font-weight: 600; text-align: left; cursor: pointer; }
@@ -1024,7 +1027,7 @@
       <div class="pf-pseudo" id="pf-pseudo"></div>
     </div>
     <div class="pf-stats" id="pf-stats"></div>
-    <div class="encart"><b>Visible par tes potes :</b> ton pseudo et tes listes publiques (dans Explorer). Ton répertoire, tes to do, tes likes et tes listes privées restent privés, et tes restos testés aussi tant que tu ne choisis pas de les montrer.</div>
+    <div class="encart" id="pf-encart"></div>
   </div>
 </div>
 <div class="bs-bg hidden" id="bs-plus" role="dialog" aria-modal="true" aria-labelledby="bs-plus-t">
@@ -1040,6 +1043,7 @@
     <div class="bs-head"><h2 id="bs-reglages-t">Réglages</h2><button type="button" class="draw-close" id="rg-x" aria-label="Fermer">✕</button></div>
     <div class="bs-scroll">
       <button type="button" class="rg-item" id="rg-raccourci">📲 <span id="rg-raccourci-t">Raccourci N!che</span></button>
+      <button type="button" class="switch rg-switch" id="rg-testes" role="switch" aria-checked="false"><span class="t"><b>Montrer mes restos testés</b><span>Tes potes voient tes restos en done sur ton profil</span></span><span class="sw" aria-hidden="true"></span></button>
       <button type="button" class="rg-item" id="rg-retours">⭐ Donner mon avis</button>
       <button type="button" class="rg-item" id="rg-aide" aria-expanded="false" aria-controls="rg-aide-box">❓ Aide</button>
       <div class="rg-aide hidden" id="rg-aide-box">
@@ -1048,6 +1052,15 @@
       </div>
       <button type="button" class="rg-item rg-out" id="rg-logout">Se déconnecter</button>
     </div>
+  </div>
+</div>
+<div class="bs-bg hidden" id="bs-testes" role="dialog" aria-modal="true" aria-labelledby="bs-testes-t">
+  <div class="bs">
+    <div class="bs-head"><h2 id="bs-testes-t">Montrer tes restos testés à tes potes ?</h2><button type="button" class="draw-close" id="testes-x" aria-label="Fermer">✕</button></div>
+    <p class="testes-txt">Tes potes verront sur ton profil les restos que tu as passés en <b>done</b> : nom, quartier, cuisine.<br>Jamais tes to do, tes likes ni tes listes privées.</p>
+    <p class="testes-txt petit">Tu peux changer d'avis quand tu veux : Profil → ⚙ Réglages.</p>
+    <button type="button" class="bs-go" id="testes-oui">Oui, je les montre</button>
+    <button type="button" class="sheet-later" id="testes-non" style="margin:0">Non, je les garde pour moi</button>
   </div>
 </div>
 <nav class="tabbar hidden" id="tabbar" aria-label="Navigation">
@@ -1091,6 +1104,7 @@
       "sheet-raccourci": () => fermerRaccourci(), "sheet-mdp": () => fermerMdp(),
       "bs-plus": () => montrer("bs-plus", false), "bs-reglages": () => montrer("bs-reglages", false),
       "pg-public": () => fermerPublique(),
+      "bs-testes": () => repondreTestes(false),
     };
     const pile = [];                 // fenêtres ouvertes, de la plus ancienne à la plus récente
     const fermeesParRetour = new Set();
@@ -1423,7 +1437,7 @@
     $("sheet-install").href = RACCOURCI_ICLOUD;
     $("sheet-raccourci").classList.remove("hidden");
   }
-  function fermerRaccourci() { $("sheet-raccourci").classList.add("hidden"); }
+  function fermerRaccourci() { $("sheet-raccourci").classList.add("hidden"); setTimeout(proposerTestes, 500); }
   $("open-raccourci").onclick = ouvrirRaccourci;
   if (estAndroid) $("open-raccourci").textContent = "Installer N!che";
   $("sheet-close").onclick = fermerRaccourci;
@@ -1666,7 +1680,9 @@
     $("tabbar").classList.remove("hidden");
     $("who").textContent = user.email;
     $("menu-av").textContent = (user.email || "?").charAt(0).toUpperCase();
-    const { data: prof } = await sb.from("profils").select("pseudo").eq("id", user.id).maybeSingle();
+    const { data: prof } = await sb.from("profils").select("pseudo, montrer_testes, choix_testes_le").eq("id", user.id).maybeSingle();
+    monProfil = prof || null;
+    majInterrupteurTestes();
     if (prof && prof.pseudo) {
       $("who").textContent = prof.pseudo;
       $("menu-av").textContent = prof.pseudo.charAt(0).toUpperCase();
@@ -1677,6 +1693,7 @@
     if (profondeur(s0) && !(s0 && s0.fiche)) { await chargerListes(); etatPages(s0); }
     if (lireAttente().length) suivreAttente();
     proposerRaccourciSiNouveau(user);
+    if ($("sheet-raccourci").classList.contains("hidden")) setTimeout(proposerTestes, 600);
     envoyerPartage(user);
   }
 
@@ -3103,6 +3120,52 @@
     document.addEventListener("input", (e) => { if (e.target.matches && e.target.matches(SEL)) equiper(e.target); maj(); }, true);
     document.addEventListener("click", () => setTimeout(maj, 0), true);
   })();
+
+  // ===== TICK-38, étape 2 : « Montrer mes restos testés ? » (opt-in, demandé une seule fois) + interrupteur dans Réglages =====
+  // Seules les colonnes montrer_testes et choix_testes_le de son propre profil sont modifiables depuis l'appli.
+  let monProfil = null;
+  function majInterrupteurTestes() {
+    const oui = !!(monProfil && monProfil.montrer_testes);
+    $("rg-testes").setAttribute("aria-checked", String(oui));
+    $("pf-encart").innerHTML = oui
+      ? "<b>Visible par tes potes :</b> ton pseudo, tes listes publiques et tes restos testés (dans Explorer). Ton répertoire, tes to do, tes likes et tes listes privées restent privés."
+      : "<b>Visible par tes potes :</b> ton pseudo et tes listes publiques (dans Explorer). Tes restos testés, ton répertoire, tes to do, tes likes et tes listes privées restent privés.";
+  }
+  function uneFenetreOuverte() {
+    return [...document.querySelectorAll(".bs-bg, .sheet-bg, .draw-bg, .flt-bg, .menu-bg")].some((e) => !e.classList.contains("hidden"));
+  }
+  function proposerTestes() {
+    if (!currentUser || !monProfil || monProfil.choix_testes_le) return;
+    if (uneFenetreOuverte() || !$("pg-public").classList.contains("hidden")) return;
+    montrer("bs-testes", true);
+  }
+  async function enregistrerTestes(oui) {
+    const avant = monProfil ? { ...monProfil } : null;
+    monProfil = Object.assign(monProfil || {}, { montrer_testes: oui, choix_testes_le: new Date().toISOString().slice(0, 10) });
+    majInterrupteurTestes();
+    const { error } = await sb.from("profils").update({ montrer_testes: oui, choix_testes_le: monProfil.choix_testes_le }).eq("id", currentUser.id);
+    if (error) {
+      console.warn("montrer_testes", error);
+      monProfil = avant; majInterrupteurTestes();
+      toast("Oups, ton choix n'a pas été enregistré. Réessaie dans un instant.");
+      return false;
+    }
+    return true;
+  }
+  // Fermer sans répondre (✕, retour du téléphone, toucher à côté) = « non » : rien n'est montré, et on ne redemande pas.
+  async function repondreTestes(oui) {
+    montrer("bs-testes", false);
+    if (await enregistrerTestes(oui)) toast(oui ? "Tes potes verront tes restos testés 👀" : "Tes restos testés restent privés 🔒");
+  }
+  $("testes-oui").onclick = () => repondreTestes(true);
+  $("testes-non").onclick = () => repondreTestes(false);
+  $("testes-x").onclick = () => repondreTestes(false);
+  $("bs-testes").addEventListener("click", (e) => { if (e.target === $("bs-testes")) repondreTestes(false); });
+  $("rg-testes").onclick = async () => {
+    const oui = $("rg-testes").getAttribute("aria-checked") !== "true";
+    if (await enregistrerTestes(oui)) toast(oui ? "Tes restos testés sont visibles par tes potes" : "Tes restos testés sont privés");
+  };
+  majInterrupteurTestes();
   NAV.demarrer();
 </script>
 </body>
