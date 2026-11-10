@@ -2380,9 +2380,17 @@
     ],
     "pays": [
     "🌍 Pays",
-    "🇫🇷 france francais|🇮🇹 italie italien|🇯🇵 japon japonais|🇨🇳 chine chinois|🇰🇷 coree coreen|🇹🇭 thailande thai|🇻🇳 vietnam vietnamien|🇮🇳 inde indien|🇱🇧 liban libanais|🇲🇦 maroc marocain|🇹🇳 tunisie tunisien|🇩🇿 algerie algerien|🇪🇸 espagne espagnol|🇵🇹 portugal portugais|🇬🇷 grece grec|🇹🇷 turquie turc|🇲🇽 mexique mexicain|🇺🇸 usa americain|🇧🇷 bresil bresilien|🇵🇪 perou peruvien|🇬🇧 anglais angleterre|🇸🇳 senegal senegalais|🇪🇹 ethiopie ethiopien|🇮🇱 israel israelien|🇩🇪 allemagne allemand|🇧🇪 belgique belge"
+    "🇫🇷 france francais|🇮🇹 italie italien|🇯🇵 japon japonais|🇨🇳 chine chinois|🇰🇷 coree coreen|🇹🇭 thailande thai|🇻🇳 vietnam vietnamien|🇮🇳 inde indien|🇱🇧 liban libanais|🇲🇦 maroc marocain|🇹🇳 tunisie tunisien|🇩🇿 algerie algerien|🇪🇸 espagne espagnol|🇵🇹 portugal portugais|🇬🇷 grece grec|🇹🇷 turquie turc|🇲🇽 mexique mexicain|🇺🇸 usa americain|🇧🇷 bresil bresilien|🇵🇪 perou peruvien|🇬🇧 anglais angleterre|🇸🇳 senegal senegalais|🇲🇶 martinique antilles|🇬🇵 guadeloupe antilles|🇷🇪 reunion|🇬🇫 guyane|🇾🇹 mayotte|🇳🇨 nouvelle caledonie|🇵🇫 polynesie tahiti|🇭🇹 haiti haitien|🇯🇲 jamaique jamaicain|🇨🇮 cote d ivoire ivoirien|🇨🇲 cameroun camerounais|🇪🇹 ethiopie ethiopien|🇮🇱 israel israelien|🇩🇪 allemagne allemand|🇧🇪 belgique belge"
     ]
     };
+  // Tous les emojis (≈1 870, libellés français, Emojibase MIT) : fichier emojis-fr.json chargé à l'ouverture de la Couverture.
+  let EMO_TOUS = null, emoTousPromesse = null;
+  function chargerTousEmojis() {
+    if (!emoTousPromesse) emoTousPromesse = fetch("emojis-fr.json").then((r) => (r.ok ? r.json() : null))
+      .then((j) => { EMO_TOUS = j && Array.isArray(j.e) ? j.e.map(([e, mots, g]) => ({ e, mots, g })) : []; if (couv && $("bs-couv") && !$("bs-couv").classList.contains("hidden")) renderEmojis(); })
+      .catch((e) => { console.warn("emojis-fr.json", e); EMO_TOUS = []; emoTousPromesse = null; });
+    return emoTousPromesse;
+  }
   const EMO_LISTE = Object.entries(EMO_CATS).flatMap(([cat, [, txt]]) => txt.split("|").map((x) => { const i = x.indexOf(" "); return { e: x.slice(0, i), mots: x.slice(i + 1), cat }; }));
   const COUV_COULEURS = [["Tomate", "#d9481c"], ["Pêche", "#fbe4da"], ["Crème", "#f6efe6"], ["Moutarde", "#f2c14e"], ["Sauge", "#a9c8a4"], ["Vert", "#2f7d4f"], ["Bleu nuit", "#24324a"], ["Encre", "#1f1a17"]];
   const MAX_PHOTOS = 10;
@@ -2674,17 +2682,23 @@
     const q = norm(couv.q || "").trim();
     $("couv-cats").innerHTML = Object.entries(EMO_CATS).map(([k, [nom]]) => '<button type="button" data-cat="' + k + '" aria-pressed="' + (!q && couv.cat === k) + '">' + nom + "</button>").join("");
     const vus = new Set();
-    const liste = EMO_LISTE.filter((x) => (q ? (" " + norm(x.mots)).includes(" " + q) || norm(x.mots).includes(q) : x.cat === couv.cat) && !vus.has(x.e) && vus.add(x.e));
+    const unique = (x) => !vus.has(x.e) && vus.add(x.e);
+    let liste = EMO_LISTE.filter((x) => (q ? norm(x.mots).includes(q) : x.cat === couv.cat) && unique(x));
+    if (EMO_TOUS) {
+      if (q) liste = liste.concat(EMO_TOUS.filter((x) => x.mots.includes(q) && unique(x)).slice(0, 120));
+      else if (couv.cat === "pays") liste = liste.concat(EMO_TOUS.filter((x) => x.g === 9 && unique(x)));
+    }
     const garde = $("couv-emojis").scrollLeft;
     $("couv-emojis").innerHTML = liste.length
       ? liste.map((x) => '<button type="button" data-emo="' + x.e + '" aria-pressed="' + (modeEmoji && couv.couverture_emoji === x.e) + '" aria-label="' + esc(x.mots.split(" ")[0]) + '" title="' + esc(x.mots) + '">' + x.e + "</button>").join("")
-      : '<p class="couv-rien">Aucun emoji pour « ' + esc(couv.q) + ' ». Essaie un autre mot.</p>';
+      : '<p class="couv-rien">' + (EMO_TOUS ? "Aucun emoji pour « " + esc(couv.q) + " ». Essaie un autre mot." : "Recherche dans tous les emojis…") + "</p>";
     $("couv-emojis").scrollLeft = garde;
   }
   function ouvrirCouv() {
     couv = { couverture_emoji: brouillon.couverture_emoji, couverture_fond: brouillon.couverture_fond, couverture_photo: brouillon.couverture_photo,
       onglet: brouillon.couverture_photo ? "photo" : "emoji", cat: "plats", q: "" };
     $("couv-cherche").value = "";
+    chargerTousEmojis();
     renderCouv();
     montrer("bs-couv", true);
   }
