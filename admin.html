@@ -90,7 +90,6 @@
   <section class="carte hidden" id="refuse">
     <h1>Accès réservé</h1>
     <p id="refuse-txt">Cette page est réservée à l'équipe N!che.</p>
-    <button type="button" class="btn" id="changer">Se connecter avec un autre compte</button>
     <a class="btn secondaire" href="./">Aller sur N!che</a>
   </section>
 
@@ -191,7 +190,7 @@
     $("co-pass").value = "";
     demarrer();
   };
-  $("changer").onclick = async () => { await sb.auth.signOut(); demarrer(); };
+
 
   async function chargerAttente() {
     const { data, error } = await sb.rpc("mes_invitations_en_attente");

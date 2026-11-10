@@ -662,6 +662,8 @@
   .ami-row .chev { color: var(--muted); font-size: 22px; }
   .mini-av { flex: none; width: 44px; height: 44px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); font: 800 20px/1 "Baloo 2", system-ui, sans-serif; display: flex; align-items: center; justify-content: center; }
   .ami-suivre-ligne { display: flex; justify-content: center; }
+  .pf-admin { display: flex; flex-direction: column; gap: 2px; margin-top: 14px; padding: 14px 16px; border-radius: 16px; border: 1px solid var(--line); background: var(--card); color: var(--ink); font-weight: 700; text-decoration: none; }
+  .pf-admin span { font-size: 13px; font-weight: 400; color: var(--muted); }
   .pf-cpt { display: flex; flex-direction: column; align-items: center; border: 0; background: none; padding: 4px 8px; border-radius: 12px; color: var(--muted); font: inherit; font-size: 13px; cursor: pointer; }
   .pf-cpt b { font-size: 20px; color: var(--ink); }
   .pf-cpt:active { background: var(--chip); }
@@ -1059,6 +1061,7 @@
     <div class="pf-stats" id="pf-stats"></div>
     <div class="pf-stats" id="pf-stats2"></div>
     <div class="encart" id="pf-encart"></div>
+    <a class="pf-admin hidden" id="pf-admin" href="admin.html">🛠️ Accès admin<span>Créer et partager des invitations</span></a>
   </div>
 </div>
 <div class="bs-bg hidden" id="bs-plus" role="dialog" aria-modal="true" aria-labelledby="bs-plus-t">
@@ -1717,6 +1720,7 @@
     currentUser = null;
     restos = [];
     mesSuivis.clear(); mesSuivisCharges = false;
+    estAdmin = null; $("pf-admin").classList.add("hidden");
     document.body.classList.add("portal");
     $("auth").classList.remove("hidden");
     $("app").classList.add("hidden");
@@ -3071,6 +3075,17 @@
     $("pf-stats").innerHTML = stat(restos.length, "restos") + stat(restos.filter(estDone).length, "testés") + stat(listes.length, listes.length > 1 ? "listes" : "liste");
     $("pf-stats2").innerHTML = stat("…", "abonnés") + stat("…", "abonnements");
     compterAbonnes();
+    verifierAdmin();
+  }
+  // Bouton « Accès admin » : visible seulement si la base accepte ce compte comme admin (même contrôle que admin.html)
+  let estAdmin = null;
+  async function verifierAdmin() {
+    if (!currentUser) return;
+    if (estAdmin === null) {
+      const { error } = await sb.rpc("mes_invitations_en_attente");
+      estAdmin = !error;
+    }
+    $("pf-admin").classList.toggle("hidden", !estAdmin);
   }
   async function compterAbonnes() {
     if (!currentUser) return;
