@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="N!che admin">
+<meta name="theme-color" content="#f6f1ea">
+<title>N!che admin</title>
+<link rel="manifest" href="admin.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@800&family=Fraunces:opsz,wght@9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- TICK-91 : page admin (invitations). index.html n'est pas touché.
+     La sécurité est dans la base : creer_invitation et mes_invitations_en_attente refusent tout compte absent de la table admins. -->
+<style>
+  :root {
+    --bg: #f6f1ea; --card: #ffffff; --ink: #1f1a17; --muted: #7a6f66; --line: #e6ddd2;
+    --accent: #d9481c; --accent-soft: #fbe4da; --chip: #efe7dd; --ok: #2f7d4f;
+    --shadow: 0 1px 2px rgba(31,26,23,.06), 0 6px 18px rgba(31,26,23,.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #161311; --card: #211d1a; --ink: #f3ece4; --muted: #a89c91; --line: #342e29; --accent: #ff7a4d; --accent-soft: #3a2219; --chip: #2c2622; --ok: #5cc28a; --shadow: none; }
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.45 Inter, system-ui, -apple-system, sans-serif; }
+  main { max-width: 520px; margin: 0 auto; padding: calc(16px + env(safe-area-inset-top)) 16px calc(32px + env(safe-area-inset-bottom)); }
+  header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
+  .logo { font: 800 30px/1 "Baloo 2", system-ui, sans-serif; letter-spacing: -.5px; }
+  .badge { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; padding: 4px 9px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); }
+  .lien-appli { color: var(--muted); font-size: 14px; text-decoration: none; padding: 8px 0; }
+  .carte { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 18px 16px; box-shadow: var(--shadow); margin-bottom: 16px; }
+  h1 { font: 600 24px/1.2 Fraunces, Georgia, serif; margin: 0 0 4px; }
+  h2 { font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 0 0 10px; }
+  p { margin: 0 0 12px; }
+  .petit { font-size: 13px; color: var(--muted); }
+  label { display: block; font-size: 13px; color: var(--muted); margin: 6px 0 4px; }
+  .champ { position: relative; }
+  input[type="text"] { width: 100%; height: 50px; padding: 0 44px 0 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--bg); color: var(--ink); font: inherit; font-size: 17px; }
+  input[type="text"]:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .x-clear { position: absolute; right: 9px; top: 50%; transform: translateY(-50%); width: 32px; height: 32px; border: 0; border-radius: 50%; background: var(--chip); color: var(--muted); font-size: 15px; cursor: pointer; }
+  .x-clear[hidden] { display: none; }
+  .btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 52px; margin-top: 12px; border: 0; border-radius: 14px; background: var(--accent); color: #fff; font: inherit; font-size: 17px; font-weight: 700; text-decoration: none; cursor: pointer; }
+  .btn:disabled { opacity: .6; cursor: default; }
+  .btn.secondaire { background: var(--chip); color: var(--ink); }
+  .btn.lien { background: none; color: var(--muted); min-height: 44px; font-size: 15px; font-weight: 600; text-decoration: underline; }
+  .err { color: var(--accent); font-size: 14px; min-height: 1.2em; margin-top: 10px; }
+  .code { font: 800 30px/1.1 "Baloo 2", system-ui, sans-serif; letter-spacing: 1px; text-align: center; padding: 10px 0 4px; user-select: all; -webkit-user-select: all; }
+  .pour { text-align: center; color: var(--muted); margin-bottom: 14px; }
+  .apercu { white-space: pre-wrap; overflow-wrap: anywhere; background: var(--bg); border: 1px dashed var(--line); border-radius: 14px; padding: 12px 14px; font-size: 15px; margin: 0; }
+  .ligne { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); }
+  .ligne:first-of-type { border-top: 0; }
+  .ligne .t { flex: 1; min-width: 0; }
+  .ligne .t b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ligne .t span { font-size: 13px; color: var(--muted); }
+  .ligne button { flex: none; min-height: 40px; padding: 0 14px; border: 1px solid var(--line); border-radius: 999px; background: var(--card); color: var(--ink); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .vide { color: var(--muted); font-size: 14px; }
+  .toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom)); transform: translateX(-50%) translateY(20px); opacity: 0; background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 999px; font-size: 14px; font-weight: 600; transition: .2s; pointer-events: none; max-width: calc(100% - 32px); text-align: center; }
+  .toast.on { opacity: 1; transform: translateX(-50%); }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div style="display:flex;align-items:center;gap:10px"><span class="logo">N!che</span><span class="badge">Admin</span></div>
+    <a class="lien-appli" href="./">← Retour à l'appli</a>
+  </header>
+
+  <section class="carte" id="chargement"><p class="petit" style="margin:0">Vérification de ton compte…</p></section>
+
+  <section class="carte hidden" id="refuse">
+    <h1>Accès réservé</h1>
+    <p id="refuse-txt">Cette page est réservée à l'équipe N!che.</p>
+    <a class="btn secondaire" href="./">Aller sur N!che</a>
+  </section>
+
+  <div class="hidden" id="ecran1">
+    <section class="carte">
+      <h1>Inviter quelqu'un</h1>
+      <p class="petit">Un lien d'invitation ne sert qu'une fois.</p>
+      <form id="form-invit" novalidate>
+        <label for="prenom">Prénom</label>
+        <div class="champ">
+          <input type="text" id="prenom" maxlength="40" autocomplete="off" autocapitalize="words" spellcheck="false" placeholder="Ex. Sarah" required>
+          <button type="button" class="x-clear" id="prenom-x" aria-label="Tout effacer" hidden>✕</button>
+        </div>
+        <button type="submit" class="btn" id="creer">Créer l'invitation</button>
+        <div class="err" id="err" role="alert"></div>
+      </form>
+    </section>
+    <section class="carte">
+      <h2>En attente</h2>
+      <div id="attente"><p class="vide">Chargement…</p></div>
+    </section>
+  </div>
+
+  <section class="carte hidden" id="ecran2" aria-labelledby="e2-titre">
+    <h1 id="e2-titre">Invitation prête 🎉</h1>
+    <div class="code" id="e2-code"></div>
+    <div class="pour" id="e2-pour"></div>
+    <h2>Le message</h2>
+    <p class="apercu" id="e2-message"></p>
+    <button type="button" class="btn" id="e2-partager">📤 Partager l'invitation</button>
+    <p class="petit" id="e2-aide" style="text-align:center;margin:8px 0 0">Messages, WhatsApp, Mail, Insta… tu choisis.</p>
+    <button type="button" class="btn secondaire" id="e2-copier">📋 Copier le message</button>
+    <button type="button" class="btn lien" id="e2-retour">Créer une autre invitation</button>
+  </section>
+</main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+  const SUPABASE_URL = "https://ckhrhexnldbcbdqxdkmu.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_JKbRFpLO_TVeBtjOg7YGeg_CmOOMI-g"; // clé publique (comme index.html), pas une clé secrète
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  const $ = (id) => document.getElementById(id);
+  const montrer = (id, oui) => $(id).classList.toggle("hidden", !oui);
+  let minuteurToast;
+  function toast(t) { const e = $("toast"); e.textContent = t; e.classList.add("on"); clearTimeout(minuteurToast); minuteurToast = setTimeout(() => e.classList.remove("on"), 2600); }
+
+  // Message d'invitation : une seule version, différences iPhone / Android signalées dans les étapes
+  const message = (prenom, lien) => [
+    "Hey " + (prenom || "toi") + " ! 👋",
+    "Voici ton invitation pour N!che, mon appli pour choper les meilleures adresses repérées sur Insta et les partager avec tes potes 🍽️",
+    "",
+    "1. Ouvre ce lien (il ne marche qu'une fois) : " + lien,
+    "2. Crée ton compte : email, mot de passe et pseudo. Le code d'invitation est déjà rempli.",
+    "3. Mets N!che sur ton écran d'accueil :",
+    "   • iPhone : dans Safari, bouton Partager ⬆️ puis « Sur l'écran d'accueil »",
+    "   • Android : dans Chrome, menu ⋮ puis « Installer l'application »",
+    "4. Pour ajouter un resto depuis Insta : sur un reel, bouton Partager puis N!che.",
+    "   • iPhone : ajoute d'abord le raccourci N!che, l'appli te le propose juste après l'inscription",
+    "   • Android : N!che apparaît direct dans le menu Partager une fois l'appli installée",
+    "",
+    "À toi de jouer 😉",
+  ].join("\n");
+  const dateCourte = (d) => (d ? new Date(d).toLocaleDateString("fr-FR", { day: "numeric", month: "short" }) : "");
+  const estRefus = (e) => e && (e.code === "42501" || /acces_refuse|permission denied/i.test(e.message || ""));
+
+  // Démarrage : même site que l'appli, donc même session. Pas de compte → on renvoie vers l'appli.
+  (async function demarrer() {
+    const { data } = await sb.auth.getSession();
+    const user = data && data.session && data.session.user;
+    montrer("chargement", false);
+    if (!user) {
+      $("refuse-txt").textContent = "Connecte-toi d'abord dans N!che avec ton compte, puis reviens ici.";
+      montrer("refuse", true);
+      return;
+    }
+    const ok = await chargerAttente();
+    if (!ok) return;
+    montrer("ecran1", true);
+  })();
+
+  async function chargerAttente() {
+    const { data, error } = await sb.rpc("mes_invitations_en_attente");
+    if (error) {
+      if (estRefus(error)) { montrer("ecran1", false); montrer("refuse", true); return false; }
+      console.warn("mes_invitations_en_attente", error);
+      $("attente").innerHTML = '<p class="vide">La liste n\'a pas pu se charger.</p>';
+      return true;
+    }
+    const liste = data || [];
+    $("attente").innerHTML = liste.length
+      ? liste.map((x, i) => '<div class="ligne"><div class="t"><b></b><span></span></div><button type="button" data-i="' + i + '">Renvoyer</button></div>').join("")
+      : '<p class="vide">Aucune invitation en attente.</p>';
+    // textes posés sans HTML (prénoms tapés à la main)
+    $("attente").querySelectorAll(".ligne").forEach((el, i) => {
+      el.querySelector("b").textContent = liste[i].pour || "Sans prénom";
+      el.querySelector("span").textContent = liste[i].code + (liste[i].cree_le ? " · " + dateCourte(liste[i].cree_le) : "");
+    });
+    $("attente").onclick = (e) => { const b = e.target.closest("[data-i]"); if (b) afficherInvitation(liste[+b.dataset.i]); };
+    return true;
+  }
+
+  // Champ prénom : croix pour tout effacer
+  $("prenom").addEventListener("input", () => { $("prenom-x").hidden = !$("prenom").value; });
+  $("prenom-x").addEventListener("mousedown", (e) => e.preventDefault());
+  $("prenom-x").onclick = () => { $("prenom").value = ""; $("prenom-x").hidden = true; $("prenom").focus(); };
+
+  $("form-invit").onsubmit = async (e) => {
+    e.preventDefault();
+    const prenom = $("prenom").value.trim();
+    $("err").textContent = "";
+    if (!prenom) { $("err").textContent = "Tape le prénom de la personne."; $("prenom").focus(); return; }
+    $("creer").disabled = true;
+    const { data, error } = await sb.rpc("creer_invitation", { prenom });
+    $("creer").disabled = false;
+    if (error) {
+      if (estRefus(error)) { montrer("ecran1", false); montrer("refuse", true); return; }
+      console.warn("creer_invitation", error);
+      $("err").textContent = "Oups, l'invitation n'a pas été créée. Réessaie dans un instant.";
+      return;
+    }
+    const inv = data && data[0];
+    if (!inv) { $("err").textContent = "Oups, aucune invitation reçue. Réessaie."; return; }
+    $("prenom").value = ""; $("prenom-x").hidden = true;
+    afficherInvitation({ pour: prenom, code: inv.code, lien: inv.lien });
+    chargerAttente();
+  };
+
+  let courante = null;
+  function afficherInvitation(inv) {
+    courante = inv;
+    const txt = message(inv.pour || "", inv.lien);
+    $("e2-code").textContent = inv.code;
+    $("e2-pour").textContent = "pour " + (inv.pour || "?");
+    $("e2-message").textContent = txt;
+    $("e2-partager").classList.toggle("hidden", !navigator.share);
+    $("e2-aide").classList.toggle("hidden", !navigator.share);
+    montrer("ecran1", false); montrer("ecran2", true);
+    window.scrollTo(0, 0);
+  }
+  $("e2-partager").onclick = async () => {
+    if (!courante || !navigator.share) return;
+    try { await navigator.share({ text: message(courante.pour || "", courante.lien) }); }
+    catch (e) { if (e && e.name !== "AbortError") toast("Le partage n'a pas marché, copie le message."); }
+  };
+  $("e2-copier").onclick = async () => {
+    if (!courante) return;
+    const txt = message(courante.pour || "", courante.lien);
+    try { await navigator.clipboard.writeText(txt); toast("Message copié ✅ Colle-le où tu veux"); }
+    catch (e) { window.prompt("Copie ce message :", txt); }
+  };
+  $("e2-retour").onclick = () => { montrer("ecran2", false); montrer("ecran1", true); window.scrollTo(0, 0); setTimeout(() => $("prenom").focus(), 50); };
+</script>
+</body>
+</html>
