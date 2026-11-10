@@ -359,6 +359,8 @@
   .auth .forgot { display: block; margin: 10px auto 0; background: none; border: 0; padding: 4px 6px; color: inherit; opacity: .8; font: inherit; font-size: 14px; text-decoration: underline; cursor: pointer; }
   .auth .forgot.ok { opacity: 1; text-decoration: none; }
   .mdp-form { text-align: left; }
+  .mdp-titre { margin: 0 0 6px; font: 800 24px/1.15 "Baloo 2", system-ui, sans-serif; }
+  .mdp-intro { margin: 0; font-size: 15px; line-height: 1.4; opacity: .85; }
   .mdp-form label { display: block; font-size: 13px; color: var(--muted); margin: 10px 0 4px; }
   .mdp-form input { width: 100%; box-sizing: border-box; padding: 11px 48px 11px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font: inherit; font-size: 16px; }
   .mdp-form .sheet-btn { width: 100%; border: 0; cursor: pointer; font: inherit; font-weight: 600; font-size: 17px; }
@@ -585,6 +587,8 @@
   .x-clear { flex: none; width: 32px; height: 32px; margin-right: -4px; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 50%; background: var(--chip); color: var(--muted); font: inherit; font-size: 15px; line-height: 1; cursor: pointer; }
   .x-clear[hidden] { display: none; }
   .x-wrap > .x-clear { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); margin: 0; }
+  .pass-wrap .x-wrap > input { padding-right: 88px !important; }
+  .pass-wrap .x-wrap > .x-clear { right: 48px; }
   .bs .aj-q input[type="search"] { border: 0; background: transparent; padding: 0; min-height: 46px; outline: none; }
   .aj-q:focus-within { box-shadow: inset 0 -2px 0 var(--accent); }
   .aj-res { max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; }
@@ -664,6 +668,7 @@
   .ami-resto .t b { font-family: Fraunces, Georgia, serif; font-weight: 600; font-size: 16px; overflow-wrap: anywhere; }
   .ami-resto .t span { font-size: 13px; color: var(--muted); }
   .ami-resto a { flex: none; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--chip); text-decoration: none; }
+  .envoye-etapes { margin: 0 0 8px; padding-left: 20px; display: grid; gap: 6px; text-align: left; font-size: 15px; line-height: 1.4; }
   .testes-txt { margin: 0; font-size: 15px; line-height: 1.45; color: var(--ink); }
   .testes-txt.petit { font-size: 13px; color: var(--muted); }
   .rg-switch { width: 100%; margin: 8px 0; }
@@ -687,6 +692,25 @@
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <div class="share-banner hidden" id="share-banner"><b id="share-title"></b><span id="share-text"></span></div>
 
+<!-- Page « Nouveau mot de passe » (retour du lien du mail) : même style que la connexion, bloquante -->
+<section class="auth hidden" id="sheet-mdp" aria-labelledby="mdp-title">
+  <h2 class="mdp-titre" id="mdp-title">Nouveau mot de passe 🔑</h2>
+  <p class="mdp-intro">Choisis ton nouveau mot de passe et tape-le deux fois. Ensuite, tu te reconnectes avec.</p>
+  <form id="mdp-form" novalidate>
+    <label for="mdp-pass">Nouveau mot de passe</label>
+    <div class="pass-wrap">
+      <input id="mdp-pass" class="avec-croix" name="new-password" type="password" autocomplete="new-password" minlength="6" required>
+      <button class="eye" id="mdp-eye" type="button" aria-label="Afficher les mots de passe">👁</button>
+    </div>
+    <div class="hint" style="margin-top:6px">6 caractères minimum.</div>
+    <label for="mdp-pass2">Confirme le mot de passe</label>
+    <div class="pass-wrap">
+      <input id="mdp-pass2" class="avec-croix" name="new-password-confirm" type="password" autocomplete="new-password" minlength="6" required>
+    </div>
+    <button class="submit" id="mdp-go" type="submit">Enregistrer</button>
+    <div class="err" id="mdp-err" role="alert"></div>
+  </form>
+</section>
 <section class="auth hidden" id="auth">
   <div class="tabs">
     <button class="chip on" id="tab-login" type="button">Se connecter</button>
@@ -694,10 +718,10 @@
   </div>
   <form id="auth-form" novalidate>
     <label for="f-email">Email</label>
-    <input id="f-email" name="email" type="email" autocomplete="username" inputmode="email" autocapitalize="off" required>
+    <input id="f-email" class="avec-croix" name="email" type="email" autocomplete="username" inputmode="email" autocapitalize="off" required>
     <label for="f-pass">Mot de passe</label>
     <div class="pass-wrap">
-      <input id="f-pass" type="password" autocomplete="current-password" required minlength="6">
+      <input id="f-pass" class="avec-croix" type="password" autocomplete="current-password" required minlength="6">
       <button class="eye" id="f-eye" type="button" aria-label="Afficher le mot de passe">👁</button>
     </div>
     <div id="signup-fields" class="hidden">
@@ -718,24 +742,19 @@
 </section>
 <div class="portal-foot">Sur invitation uniquement · bêta</div>
 
-<div class="sheet-bg hidden" id="sheet-mdp" style="z-index:45" role="dialog" aria-modal="true" aria-labelledby="mdp-title">
+<div class="sheet-bg hidden" id="sheet-envoye" style="z-index:45" role="dialog" aria-modal="true" aria-labelledby="envoye-title">
   <div class="sheet">
-    <h2 id="mdp-title">Nouveau mot de passe 🔑</h2>
-    <p>Choisis ton nouveau mot de passe. Tu l'utiliseras à ta prochaine connexion.</p>
-    <form class="mdp-form" id="mdp-form" novalidate>
-      <label for="mdp-pass">Nouveau mot de passe</label>
-      <div class="pass-wrap">
-        <input id="mdp-pass" name="new-password" type="password" autocomplete="new-password" minlength="6" required>
-        <button class="eye" id="mdp-eye" type="button" aria-label="Afficher le mot de passe">👁</button>
-      </div>
-      <p class="sheet-small">6 caractères minimum.</p>
-      <button class="sheet-btn" id="mdp-go" type="submit">Enregistrer</button>
-      <div class="mdp-err" id="mdp-err" role="alert"></div>
-      <button class="forgot" id="mdp-plus-tard" type="button" style="display:block;margin:6px auto 0;background:none;border:0;color:var(--muted);text-decoration:underline;font:inherit;font-size:14px;cursor:pointer">Plus tard</button>
-    </form>
+    <h2 id="envoye-title">Regarde tes mails 📩</h2>
+    <p>Si un compte N!che existe avec <b id="envoye-email"></b>, tu vas recevoir un lien pour choisir un nouveau mot de passe.</p>
+    <ol class="envoye-etapes">
+      <li>Ouvre le mail « Reset Your Password » (pense aux <b>spams</b>).</li>
+      <li>Touche le lien : N!che s'ouvre sur « Nouveau mot de passe ».</li>
+      <li>Choisis-en un nouveau, c'est fini.</li>
+    </ol>
+    <p class="sheet-small">Le lien ne sert qu'une fois et expire au bout d'environ une heure. Ouvre-le sur ce téléphone, de préférence.</p>
+    <button class="sheet-btn" id="envoye-ok" type="button" style="display:block;width:100%;border:0;font:inherit;font-weight:700;cursor:pointer">J'ai compris</button>
   </div>
 </div>
-
 <div class="sheet-bg hidden" id="sheet-raccourci" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
   <div class="sheet">
     <img class="sheet-icon" src="apple-touch-icon.png" alt="" aria-hidden="true">
@@ -1002,7 +1021,7 @@
 <div class="bs-bg hidden" id="bs-pick" role="dialog" aria-modal="true" aria-labelledby="bs-pick-t">
   <div class="bs">
     <div class="bs-head"><h2 id="bs-pick-t">Ajouter des restos</h2><button type="button" class="draw-close" id="bs-pick-x" aria-label="Fermer">✕</button></div>
-    <input type="search" id="bs-pick-q" placeholder="Chercher dans mes restos…" autocomplete="off" aria-label="Chercher dans mes restos">
+    <label class="search-box"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input class="search" type="search" id="bs-pick-q" placeholder="Chercher dans mes restos…" autocomplete="off" aria-label="Chercher dans mes restos"></label>
     <div class="bs-scroll" id="bs-pick-list"></div>
     <button type="button" class="bs-go" id="bs-pick-ok">OK</button>
   </div>
@@ -1101,9 +1120,10 @@
       "menu": () => fermerMenu(), "flt": () => fermerFiltres(), "draw": () => fermerTirage(),
       "bs-ajout": () => fermerAjoutManuel(), "bs-new": () => montrer("bs-new", false), "bs-add": () => montrer("bs-add", false),
       "bs-couv": () => fermerCouv(), "bs-pick": () => fermerPick(), "bs-retours": () => fermerRetours(),
-      "sheet-raccourci": () => fermerRaccourci(), "sheet-mdp": () => fermerMdp(),
+      "sheet-raccourci": () => fermerRaccourci(),
       "bs-plus": () => montrer("bs-plus", false), "bs-reglages": () => montrer("bs-reglages", false),
       "pg-public": () => fermerPublique(),
+      "sheet-envoye": () => montrer("sheet-envoye", false),
       "bs-testes": () => repondreTestes(false),
     };
     const pile = [];                 // fenêtres ouvertes, de la plus ancienne à la plus récente
@@ -1585,7 +1605,8 @@
     try {
       const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname });
       if (error) throw error;
-      err.textContent = "C'est parti 📩 Si un compte existe avec cet email, tu vas recevoir un lien. Pense à regarder tes spams.";
+      $("envoye-email").textContent = email;
+      montrer("sheet-envoye", true);
     } catch (e) {
       err.textContent = frenchError(e);
     } finally {
@@ -1593,28 +1614,36 @@
     }
   };
 
+  $("envoye-ok").onclick = () => montrer("sheet-envoye", false);
+  $("sheet-envoye").addEventListener("click", (e) => { if (e.target === $("sheet-envoye")) montrer("sheet-envoye", false); });
   let mdpOuvert = false;
   let mdpAttendu = RETOUR_MDP === "ok";
   function ouvrirMdp() {
     if (mdpOuvert) return;
     mdpOuvert = true;
     mdpAttendu = false;
-    $("mdp-pass").value = "";
+    $("mdp-pass").value = ""; $("mdp-pass2").value = "";
     $("mdp-err").textContent = "";
-    $("sheet-mdp").classList.remove("hidden");
-    document.body.style.overflow = "hidden";
+    modeMdp();
     setTimeout(() => $("mdp-pass").focus(), 60);
+  }
+  // Affiche la page du portail « Nouveau mot de passe » et cache l'appli (on ne peut pas la passer)
+  function modeMdp() {
+    document.body.classList.add("portal");
+    ["auth", "app", "dock", "add-open", "userbar", "tabbar"].forEach((id) => $(id) && $(id).classList.add("hidden"));
+    $("sub").textContent = "Plus qu'une étape : choisis ton nouveau mot de passe.";
+    $("sheet-mdp").classList.remove("hidden");
+    window.scrollTo(0, 0);
   }
   function fermerMdp() {
     mdpOuvert = false;
     $("sheet-mdp").classList.add("hidden");
-    document.body.style.overflow = "";
   }
-  $("mdp-plus-tard").onclick = fermerMdp;
   $("mdp-eye").onclick = () => {
     const p = $("mdp-pass");
     const voir = p.type === "password";
     p.type = voir ? "text" : "password";
+    $("mdp-pass2").type = p.type;
     $("mdp-eye").setAttribute("aria-label", voir ? "Masquer le mot de passe" : "Afficher le mot de passe");
     $("mdp-eye").style.opacity = voir ? "1" : ".75";
   };
@@ -1623,14 +1652,23 @@
     const password = $("mdp-pass").value;
     const err = $("mdp-err");
     err.textContent = "";
-    if (password.length < 6) { err.textContent = "Le mot de passe doit faire au moins 6 caractères."; return; }
+    if (password.length < 6) { err.textContent = "Le mot de passe doit faire au moins 6 caractères."; $("mdp-pass").focus(); return; }
+    if (password !== $("mdp-pass2").value) { err.textContent = "Les deux mots de passe ne sont pas identiques."; $("mdp-pass2").focus(); return; }
     const btn = $("mdp-go");
     btn.disabled = true;
     try {
       const { error } = await sb.auth.updateUser({ password });
       if (error) throw error;
+      // Retour au portail : on se reconnecte avec le nouveau mot de passe
+      const email = currentUser && currentUser.email;
       fermerMdp();
-      toast("Mot de passe changé ✅");
+      await sb.auth.signOut();
+      setTimeout(() => {
+        if (email) $("f-email").value = email;
+        $("f-pass").value = "";
+        $("f-err").textContent = "Mot de passe changé ✅ Connecte-toi avec ton nouveau mot de passe.";
+        $("f-pass").focus();
+      }, 400);
     } catch (e) {
       err.textContent = frenchError(e);
     } finally {
@@ -1671,6 +1709,7 @@
   async function showApp(user) {
     if (currentUser && currentUser.id === user.id) return;
     currentUser = user;
+    if (mdpOuvert) { modeMdp(); return; } // lien « mot de passe oublié » : on reste sur la page du nouveau mot de passe
     document.body.classList.remove("portal");
     $("auth").classList.add("hidden");
     $("app").classList.remove("hidden");
@@ -3098,7 +3137,7 @@
   // Croix ✕ dans chaque barre de recherche et chaque champ de texte : visible dès qu'il y a du texte,
   // efface tout le champ d'un coup et garde le clavier ouvert. Les champs créés plus tard sont équipés au premier toucher.
   (function croixChamps() {
-    const SEL = 'input[type="search"], input[type="text"], input:not([type])';
+    const SEL = 'input[type="search"], input[type="text"], input:not([type]), input.avec-croix';
     const equiper = (inp) => {
       if (inp._croix || !inp.matches(SEL)) return;
       const b = document.createElement("button");
