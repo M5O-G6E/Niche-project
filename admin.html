@@ -41,8 +41,8 @@
   .petit { font-size: 13px; color: var(--muted); }
   label { display: block; font-size: 13px; color: var(--muted); margin: 6px 0 4px; }
   .champ { position: relative; }
-  input[type="text"] { width: 100%; height: 50px; padding: 0 44px 0 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--bg); color: var(--ink); font: inherit; font-size: 17px; }
-  input[type="text"]:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  input[type="text"], input[type="email"], input[type="password"] { width: 100%; height: 50px; padding: 0 44px 0 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--bg); color: var(--ink); font: inherit; font-size: 17px; }
+  input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
   .x-clear { position: absolute; right: 9px; top: 50%; transform: translateY(-50%); width: 32px; height: 32px; border: 0; border-radius: 50%; background: var(--chip); color: var(--muted); font-size: 15px; cursor: pointer; }
   .x-clear[hidden] { display: none; }
   .btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 52px; margin-top: 12px; border: 0; border-radius: 14px; background: var(--accent); color: #fff; font: inherit; font-size: 17px; font-weight: 700; text-decoration: none; cursor: pointer; }
@@ -74,9 +74,23 @@
 
   <section class="carte" id="chargement"><p class="petit" style="margin:0">Vérification de ton compte…</p></section>
 
+  <section class="carte hidden" id="connexion">
+    <h1>Connexion admin</h1>
+    <p class="petit">Connecte-toi avec ton compte N!che.</p>
+    <form id="form-co" novalidate>
+      <label for="co-email">Email</label>
+      <div class="champ"><input type="email" id="co-email" autocomplete="username" inputmode="email" autocapitalize="off" spellcheck="false" required><button type="button" class="x-clear" aria-label="Tout effacer" hidden>✕</button></div>
+      <label for="co-pass">Mot de passe</label>
+      <div class="champ"><input type="password" id="co-pass" autocomplete="current-password" required><button type="button" class="x-clear" aria-label="Tout effacer" hidden>✕</button></div>
+      <button type="submit" class="btn" id="co-go">Se connecter</button>
+      <div class="err" id="co-err" role="alert"></div>
+    </form>
+  </section>
+
   <section class="carte hidden" id="refuse">
     <h1>Accès réservé</h1>
     <p id="refuse-txt">Cette page est réservée à l'équipe N!che.</p>
+    <button type="button" class="btn" id="changer">Se connecter avec un autre compte</button>
     <a class="btn secondaire" href="./">Aller sur N!che</a>
   </section>
 
@@ -142,20 +156,42 @@
   const dateCourte = (d) => (d ? new Date(d).toLocaleDateString("fr-FR", { day: "numeric", month: "short" }) : "");
   const estRefus = (e) => e && (e.code === "42501" || /acces_refuse|permission denied/i.test(e.message || ""));
 
-  // Démarrage : même site que l'appli, donc même session. Pas de compte → on renvoie vers l'appli.
-  (async function demarrer() {
+  // Démarrage : même site que l'appli, donc même session si on y est déjà connecté.
+  // Sinon (autre navigateur, onglet privé…), connexion directement ici.
+  async function demarrer() {
+    ["connexion", "refuse", "ecran1", "ecran2"].forEach((id) => montrer(id, false));
+    montrer("chargement", true);
     const { data } = await sb.auth.getSession();
     const user = data && data.session && data.session.user;
     montrer("chargement", false);
-    if (!user) {
-      $("refuse-txt").textContent = "Connecte-toi d'abord dans N!che avec ton compte, puis reviens ici.";
-      montrer("refuse", true);
-      return;
-    }
+    if (!user) { montrer("connexion", true); return; }
+    $("refuse-txt").textContent = "Cette page est réservée à l'équipe N!che. Tu es connecté avec " + (user.email || "un autre compte") + ".";
     const ok = await chargerAttente();
     if (!ok) return;
     montrer("ecran1", true);
-  })();
+  }
+  demarrer();
+
+  // Croix des champs de connexion
+  document.querySelectorAll("#form-co .champ").forEach((c) => {
+    const i = c.querySelector("input"), x = c.querySelector(".x-clear");
+    i.addEventListener("input", () => { x.hidden = !i.value; });
+    x.addEventListener("mousedown", (e) => e.preventDefault());
+    x.onclick = () => { i.value = ""; x.hidden = true; i.focus(); };
+  });
+  $("form-co").onsubmit = async (e) => {
+    e.preventDefault();
+    const email = $("co-email").value.trim(), password = $("co-pass").value;
+    $("co-err").textContent = "";
+    if (!email || !password) { $("co-err").textContent = "Tape ton email et ton mot de passe."; return; }
+    $("co-go").disabled = true;
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    $("co-go").disabled = false;
+    if (error) { $("co-err").textContent = /invalid/i.test(error.message || "") ? "Email ou mot de passe incorrect." : "La connexion n'a pas marché. Réessaie."; return; }
+    $("co-pass").value = "";
+    demarrer();
+  };
+  $("changer").onclick = async () => { await sb.auth.signOut(); demarrer(); };
 
   async function chargerAttente() {
     const { data, error } = await sb.rpc("mes_invitations_en_attente");
