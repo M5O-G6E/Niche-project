@@ -512,7 +512,7 @@
   /* Couverture plein écran en haut d'une liste, titre posé dessus */
   .lv-hero { position: relative; margin: calc(-12px - env(safe-area-inset-top)) -16px 0; height: calc(430px + env(safe-area-inset-top)); overflow: hidden; display: flex; align-items: center; justify-content: center; background: var(--chip); color: var(--hfg, #fff); }
   .lv-hero > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-  .lv-hero .emo { font-size: 130px; line-height: 1; margin-top: -60px; }
+  .lv-hero .emo { font-size: 160px; line-height: 1; margin-top: -60px; }
   .lv-hero .couv-mosa svg { width: 64px; height: 64px; }
   .lv-voile { position: absolute; inset: 0; }
   .lv-hero-top { position: absolute; top: calc(12px + env(safe-area-inset-top)); left: 16px; right: 16px; display: flex; justify-content: space-between; align-items: center; }
@@ -525,18 +525,26 @@
   /* TICK-82 : couverture de liste */
   .couv { position: relative; height: 160px; border-radius: 20px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: var(--chip); flex: none; }
   .couv img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-  .couv .emo { font-size: 72px; line-height: 1; }
+  .couv .emo { font-size: 96px; line-height: 1; }
   .couv-mosa { position: absolute; inset: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 2px; }
   .couv-mosa span { background: var(--b, var(--chip)); color: var(--c); display: flex; align-items: center; justify-content: center; }
   .couv-mosa svg { width: 34px; height: 34px; }
   .couv.mini { width: 64px; height: 64px; border-radius: 12px; }
-  .couv.mini .emo { font-size: 32px; }
+  .couv.mini .emo { font-size: 44px; }
   .couv.mini .couv-mosa svg { width: 18px; height: 18px; }
   .couv-btn { position: absolute; right: 12px; bottom: 12px; min-height: 40px; padding: 0 14px; border: 0; border-radius: 999px; background: #fff; color: #1f1a17; font: inherit; font-size: 14px; font-weight: 600; box-shadow: 0 6px 18px rgba(0,0,0,.15); cursor: pointer; }
   .couv-onglets { display: flex; gap: 4px; padding: 4px; background: var(--chip); border-radius: 14px; }
   .couv-onglets button { flex: 1; min-height: 40px; border: 0; border-radius: 10px; background: transparent; color: var(--ink); font: inherit; font-size: 15px; font-weight: 700; cursor: pointer; }
   .couv-onglets button[aria-selected="true"] { background: var(--card); color: var(--accent); }
-  .couv-emojis { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+  .couv-emojis { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; padding: 2px; }
+  #couv-apercu .emo { font-size: 64px; }
+  #couv-p-emoji > .search-box { position: sticky; top: 0; z-index: 2; }
+  #couv-p-emoji > .couv-cats { position: sticky; top: 46px; z-index: 2; background: var(--card); padding-top: 6px; padding-bottom: 6px; margin-top: -6px; }
+  .couv-cats { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin: 0 -2px; padding: 0 2px; }
+  .couv-cats::-webkit-scrollbar { display: none; }
+  .couv-cats button { flex: none; min-height: 36px; padding: 0 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--card); color: var(--ink); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .couv-cats button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .couv-rien { grid-column: 1 / -1; color: var(--muted); font-size: 14px; padding: 8px 2px; }
   .couv-emojis button { min-height: 46px; border: 2px solid var(--line); border-radius: 12px; background: var(--card); font-size: 24px; line-height: 1; cursor: pointer; }
   .couv-emojis button[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
   .couv-couleurs { display: flex; flex-wrap: wrap; gap: 10px; }
@@ -567,6 +575,14 @@
   .aj-zone[aria-expanded="true"] .aj-chev { transform: rotate(180deg); }
   .aj-drop { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--card); }
   .aj-q { display: flex; align-items: center; gap: 8px; padding: 0 12px; background: var(--bg); border-bottom: 1px solid var(--line); color: var(--muted); }
+  .bs .search-box input[type="search"] { min-height: 0; height: 100%; border: 0; border-radius: 0; background: transparent; padding: 0; outline: none; }
+  /* Croix ✕ dans les barres de recherche : efface tout d'un coup (remplace celle du navigateur) */
+  input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; display: none; }
+  .x-wrap { position: relative; display: block; }
+  .x-wrap > input { padding-right: 44px !important; }
+  .x-clear { flex: none; width: 32px; height: 32px; margin-right: -4px; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 50%; background: var(--chip); color: var(--muted); font: inherit; font-size: 15px; line-height: 1; cursor: pointer; }
+  .x-clear[hidden] { display: none; }
+  .x-wrap > .x-clear { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); margin: 0; }
   .bs .aj-q input[type="search"] { border: 0; background: transparent; padding: 0; min-height: 46px; outline: none; }
   .aj-q:focus-within { box-shadow: inset 0 -2px 0 var(--accent); }
   .aj-res { max-height: 240px; overflow-y: auto; display: flex; flex-direction: column; }
@@ -946,15 +962,16 @@
   <div class="bs">
     <div class="bs-head"><h2 id="bs-couv-t">Couverture</h2><button type="button" class="draw-close" id="bs-couv-x" aria-label="Fermer">✕</button></div>
     <div class="bs-scroll" style="gap:12px">
-      <div class="couv" id="couv-apercu" aria-label="Aperçu de la couverture" style="height:132px"></div>
+      <div class="couv" id="couv-apercu" aria-label="Aperçu de la couverture" style="height:96px;flex:none"></div>
       <div class="couv-onglets" role="tablist">
         <button type="button" role="tab" id="couv-tab-emoji" aria-selected="true">😀 Emoji</button>
         <button type="button" role="tab" id="couv-tab-photo" aria-selected="false">📷 Photo</button>
       </div>
       <div id="couv-p-emoji" style="display:grid;gap:12px">
-        <span class="couv-lbl">Emoji</span>
+        <label class="search-box"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input class="search" id="couv-cherche" type="search" placeholder="pizza, brunch, date, japon…" autocomplete="off" aria-label="Chercher un emoji par mot"></label>
+        <div class="couv-cats" id="couv-cats" role="group" aria-label="Catégories d'emojis"></div>
         <div class="couv-emojis" id="couv-emojis"></div>
-        <input type="text" id="couv-autre" maxlength="16" placeholder="Ou tape un autre emoji ici…" aria-label="Autre emoji" autocomplete="off">
+        <input type="text" id="couv-autre" maxlength="16" placeholder="Pas trouvé ? Colle ou tape un emoji ici" aria-label="Autre emoji" autocomplete="off">
         <span class="couv-lbl">Couleur de fond</span>
         <div class="couv-couleurs" id="couv-couleurs"></div>
       </div>
@@ -2337,7 +2354,35 @@
   }
 
   // --- TICK-82 : couverture (emoji + fond, photo, ou mosaïque automatique)
-  const COUV_EMOJIS = ["🍕", "🍣", "🍔", "🥐", "🍷", "🍜", "🌮", "🥗", "❤️", "🔥", "🥂", "🍝"];
+  // Sélecteur d'emojis : catégories + recherche par mot (sans clavier emoji, marche aussi sur PC).
+  // Pour en ajouter : « emoji mots clés » dans la bonne catégorie, séparés par |.
+  const EMO_CATS = {
+    "plats": [
+    "🍝 Plats",
+    "🍕 pizza italien italie|🍝 pates pasta spaghetti italien|🍔 burger hamburger fast food|🍟 frites fast food|🌭 hot dog|🥪 sandwich|🌮 tacos mexicain|🌯 burrito wrap|🥙 kebab grec pita|🧆 falafel libanais|🥗 salade healthy vege vegan|🍲 soupe plat mijote|🥘 paella espagnol poelee|🍗 poulet|🍖 viande barbecue grill|🥩 steak viande boucherie grill|🥓 bacon|🍳 oeuf brunch|🧀 fromage raclette|🫕 fondue savoyard montagne|🥖 baguette pain boulangerie|🥐 croissant viennoiserie boulangerie brunch|🥯 bagel brunch|🥞 pancakes crepes brunch|🧇 gaufre waffle|🦪 huitre fruits de mer|🦞 homard fruits de mer|🦐 crevette fruits de mer|🦀 crabe fruits de mer|🐟 poisson|🐙 poulpe|🥑 avocat healthy|🍅 tomate|🌶️ piment epice|🫒 olive mediterranee|🥦 legumes brocoli vege vegan|🍄 champignon|🥔 patate pomme de terre|🌽 mais"
+    ],
+    "asie": [
+    "🥢 Asie",
+    "🍣 sushi japonais japon|🍱 bento japonais japon|🍙 onigiri japonais|🍜 ramen nouilles pho soupe|🍛 curry indien|🍚 riz|🥢 baguettes asiatique|🥡 chinois a emporter|🥟 ravioli dumpling gyoza|🍤 tempura crevette|🍥 naruto ramen|🍢 brochette yakitori|🍡 dango mochi|🍘 cracker riz|🥠 fortune cookie chinois|🥮 gateau de lune|🦑 calamar|🏮 lanterne chinois asie|🐉 dragon chinois"
+    ],
+    "sucre": [
+    "🍰 Sucré",
+    "🍰 gateau dessert patisserie|🎂 anniversaire gateau|🧁 cupcake|🍩 donut beignet|🍪 cookie biscuit|🍫 chocolat|🍬 bonbon|🍭 sucette|🍮 flan creme dessert|🍦 glace italienne|🍨 glace|🍧 granite|🥧 tarte|🍯 miel|🍓 fraise fruit|🍒 cerise fruit|🍑 peche fruit|🍋 citron|🍌 banane fruit|🍉 pasteque fruit ete|🍇 raisin fruit|🍍 ananas fruit|🥭 mangue fruit|🥥 coco noix de coco|🫐 myrtille fruit|🍎 pomme fruit"
+    ],
+    "boissons": [
+    "🍷 Boissons",
+    "☕ cafe coffee|🍵 the matcha|🧋 bubble tea|🧃 jus|🥤 soda|🍺 biere|🍻 bieres apero bar potes|🍷 vin rouge|🥂 champagne trinquer|🍾 bouteille fete|🍸 cocktail martini|🍹 cocktail tropical|🥃 whisky rhum|🍶 sake|🧉 mate|🥛 lait|🫖 theiere the|🧊 glacon frais"
+    ],
+    "moments": [
+    "❤️ Moments",
+    "❤️ coeur amour date|💕 date amoureux|🌹 rose romantique date|🕯️ bougie romantique diner|🔥 feu top|⭐ etoile favori|🏆 top meilleur classement|👑 roi meilleur|💎 pepite niche rare|✨ magique|🎉 fete anniversaire|🥳 fete|👯 potes copines|🍽️ resto diner|🌙 soiree nuit|☀️ terrasse soleil ete|🌅 coucher de soleil sunset|🏖️ plage vacances|🌳 parc nature|🏙️ ville rooftop|🎶 musique concert|🎨 art|📍 adresse|💸 pas cher|💰 cher chic|🤫 secret niche|👀 a tester|😋 miam bon|🤤 gourmand|💼 dejeuner boulot travail|👨‍👩‍👧 famille|🐶 chien dog friendly|🌱 vegan vege|🚲 velo"
+    ],
+    "pays": [
+    "🌍 Pays",
+    "🇫🇷 france francais|🇮🇹 italie italien|🇯🇵 japon japonais|🇨🇳 chine chinois|🇰🇷 coree coreen|🇹🇭 thailande thai|🇻🇳 vietnam vietnamien|🇮🇳 inde indien|🇱🇧 liban libanais|🇲🇦 maroc marocain|🇹🇳 tunisie tunisien|🇩🇿 algerie algerien|🇪🇸 espagne espagnol|🇵🇹 portugal portugais|🇬🇷 grece grec|🇹🇷 turquie turc|🇲🇽 mexique mexicain|🇺🇸 usa americain|🇧🇷 bresil bresilien|🇵🇪 perou peruvien|🇬🇧 anglais angleterre|🇸🇳 senegal senegalais|🇪🇹 ethiopie ethiopien|🇮🇱 israel israelien|🇩🇪 allemagne allemand|🇧🇪 belgique belge"
+    ]
+    };
+  const EMO_LISTE = Object.entries(EMO_CATS).flatMap(([cat, [, txt]]) => txt.split("|").map((x) => { const i = x.indexOf(" "); return { e: x.slice(0, i), mots: x.slice(i + 1), cat }; }));
   const COUV_COULEURS = [["Tomate", "#d9481c"], ["Pêche", "#fbe4da"], ["Crème", "#f6efe6"], ["Moutarde", "#f2c14e"], ["Sauge", "#a9c8a4"], ["Vert", "#2f7d4f"], ["Bleu nuit", "#24324a"], ["Encre", "#1f1a17"]];
   const MAX_PHOTOS = 10;
   const photoOk = (p) => typeof p === "string" && p.startsWith("data:image/jpeg;base64,");
@@ -2613,7 +2658,7 @@
     montrer("couv-p-emoji", surEmoji);
     montrer("couv-p-photo", !surEmoji);
     const modeEmoji = !couv.couverture_photo && couv.couverture_emoji;
-    $("couv-emojis").innerHTML = COUV_EMOJIS.map((e) => '<button type="button" data-emo="' + e + '" aria-pressed="' + (modeEmoji && couv.couverture_emoji === e) + '" aria-label="Emoji ' + e + '">' + e + "</button>").join("");
+    renderEmojis();
     $("couv-couleurs").innerHTML = COUV_COULEURS.map(([n, v]) => '<button type="button" data-fond="' + v + '" aria-label="' + n + '" aria-pressed="' + (fondOk(couv.couverture_fond) === v) + '" style="background:' + v + '"></button>').join("");
     const n = photosAilleurs() + (couv.couverture_photo ? 1 : 0);
     const plein = photosAilleurs() >= MAX_PHOTOS;
@@ -2623,10 +2668,20 @@
     $("couv-choisir").disabled = plein;
     montrer("couv-alerte", plein);
   }
+  function renderEmojis() {
+    const modeEmoji = !couv.couverture_photo && couv.couverture_emoji;
+    const q = norm(couv.q || "").trim();
+    $("couv-cats").innerHTML = Object.entries(EMO_CATS).map(([k, [nom]]) => '<button type="button" data-cat="' + k + '" aria-pressed="' + (!q && couv.cat === k) + '">' + nom + "</button>").join("");
+    const vus = new Set();
+    const liste = EMO_LISTE.filter((x) => (q ? (" " + norm(x.mots)).includes(" " + q) || norm(x.mots).includes(q) : x.cat === couv.cat) && !vus.has(x.e) && vus.add(x.e));
+    $("couv-emojis").innerHTML = liste.length
+      ? liste.map((x) => '<button type="button" data-emo="' + x.e + '" aria-pressed="' + (modeEmoji && couv.couverture_emoji === x.e) + '" aria-label="' + esc(x.mots.split(" ")[0]) + '" title="' + esc(x.mots) + '">' + x.e + "</button>").join("")
+      : '<p class="couv-rien">Aucun emoji pour « ' + esc(couv.q) + ' ». Essaie un autre mot, ou colle-le dans la case en dessous.</p>';
+  }
   function ouvrirCouv() {
     couv = { couverture_emoji: brouillon.couverture_emoji, couverture_fond: brouillon.couverture_fond, couverture_photo: brouillon.couverture_photo,
-      onglet: brouillon.couverture_photo ? "photo" : "emoji" };
-    $("couv-autre").value = "";
+      onglet: brouillon.couverture_photo ? "photo" : "emoji", cat: "plats", q: "" };
+    $("couv-autre").value = ""; $("couv-cherche").value = "";
     renderCouv();
     montrer("bs-couv", true);
   }
@@ -2673,6 +2728,7 @@
     if (t.closest("#couv-tab-emoji") || t.closest("#couv-vers-emoji")) { couv.onglet = "emoji"; return renderCouv(); }
     if (t.closest("#couv-tab-photo")) { couv.onglet = "photo"; return renderCouv(); }
     const emo = t.closest("[data-emo]"); if (emo) return choisirEmoji(emo.dataset.emo);
+    const ct = t.closest("[data-cat]"); if (ct) { ct.scrollIntoView({ block: "nearest", inline: "nearest" }); couv.cat = ct.dataset.cat; couv.q = ""; $("couv-cherche").value = ""; $("couv-emojis").scrollTop = 0; return renderEmojis(); }
     const fd = t.closest("[data-fond]");
     if (fd) { couv.couverture_fond = fd.dataset.fond; if (!couv.couverture_emoji) couv.couverture_emoji = "🍽️"; couv.couverture_photo = null; return renderCouv(); }
     if (t.closest("#couv-choisir")) { if (photosAilleurs() >= MAX_PHOTOS) return renderCouv(); $("couv-fichier").value = ""; return $("couv-fichier").click(); }
@@ -2686,6 +2742,7 @@
       toast("Couverture prête : touche Enregistrer");
     }
   });
+  $("couv-cherche").addEventListener("input", (e) => { if (!couv) return; couv.q = e.target.value; $("couv-emojis").scrollTop = 0; renderEmojis(); if (!couv.q) $("couv-cats").scrollLeft = 0; });
   $("couv-autre").addEventListener("input", (e) => { if (!couv) return; const em = premierEmoji(e.target.value); if (em) choisirEmoji(em); });
   $("couv-fichier").addEventListener("change", async (e) => {
     const f = e.target.files && e.target.files[0]; if (!f || !couv) return;
@@ -3004,6 +3061,32 @@
     const c = e.target.closest("[data-code]");
     if (c) afficherListePublique(c.dataset.code);
   });
+
+  // Croix ✕ dans chaque barre de recherche et chaque champ de texte : visible dès qu'il y a du texte,
+  // efface tout le champ d'un coup et garde le clavier ouvert. Les champs créés plus tard sont équipés au premier toucher.
+  (function croixChamps() {
+    const SEL = 'input[type="search"], input[type="text"], input:not([type])';
+    const equiper = (inp) => {
+      if (inp._croix || !inp.matches(SEL)) return;
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "x-clear"; b.hidden = !inp.value; b.textContent = "✕";
+      b.setAttribute("aria-label", "Tout effacer");
+      const parent = inp.parentElement;
+      if (getComputedStyle(parent).display.includes("flex")) inp.after(b);
+      else { const w = document.createElement("span"); w.className = "x-wrap"; inp.before(w); w.append(inp, b); }
+      b.addEventListener("mousedown", (e) => e.preventDefault()); // ne pas fermer le clavier
+      b.addEventListener("click", (e) => {
+        e.preventDefault(); e.stopPropagation();
+        inp.value = ""; inp.dispatchEvent(new Event("input", { bubbles: true })); inp.focus(); b.hidden = true;
+      });
+      inp._croix = b;
+    };
+    document.querySelectorAll(SEL).forEach(equiper);
+    const maj = () => document.querySelectorAll(SEL).forEach((i) => { if (i._croix) i._croix.hidden = !i.value; });
+    document.addEventListener("focusin", (e) => { if (e.target.matches && e.target.matches(SEL)) { equiper(e.target); maj(); } }, true);
+    document.addEventListener("input", (e) => { if (e.target.matches && e.target.matches(SEL)) equiper(e.target); maj(); }, true);
+    document.addEventListener("click", () => setTimeout(maj, 0), true);
+  })();
   NAV.demarrer();
 </script>
 </body>
